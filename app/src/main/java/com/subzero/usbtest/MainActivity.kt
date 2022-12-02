@@ -16,6 +16,9 @@ import com.serenegiant.usb.UVCCamera
 import kotlinx.android.synthetic.main.activity_main.*
 import net.ossrs.rtmp.ConnectCheckerRtmp
 
+//val DEFAULT_RTMP_URL = "rtmp://113.161.183.245:1935/BPC_CAMJP01_abc123?user=admin&pass=Ab2C67e2021"
+val DEFAULT_RTMP_URL = "rtmp://103.160.75.240/live/livestream"
+
 class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
   private lateinit var usbMonitor: USBMonitor
   private var uvcCamera: UVCCamera? = null
@@ -43,7 +46,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
     usbMonitor = USBMonitor(this, onDeviceConnectListener)
     isUsbOpen = false
     usbMonitor.register()
-    et_url.setText("rtmp://103.160.75.240/live/demo1")
+    et_url.setText(DEFAULT_RTMP_URL)
     start_stop.setOnClickListener {
       if (uvcCamera != null) {
         if (!rtmpUSB.isStreaming) {
@@ -125,13 +128,13 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
 
   override fun onConnectionSuccessRtmp() {
     runOnUiThread {
-      Toast.makeText(this, "Success", Toast.LENGTH_SHORT).show()
+      Toast.makeText(this, "Rtmp connection success", Toast.LENGTH_SHORT).show()
     }
   }
 
   override fun onConnectionFailedRtmp(reason: String?) {
     runOnUiThread {
-      Toast.makeText(this, "Failed $reason", Toast.LENGTH_SHORT).show()
+      Toast.makeText(this, "Rtmp connection failed! $reason", Toast.LENGTH_SHORT).show()
       rtmpUSB.stopStream(uvcCamera)
     }
   }
