@@ -48,6 +48,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
     usbMonitor.register()
     et_url.setText(DEFAULT_RTMP_URL)
     start_stop.setOnClickListener {
+//      test_usbcam()
       if (uvcCamera != null) {
         if (!rtmpUSB.isStreaming) {
           startStream(et_url.text.toString())
@@ -60,6 +61,13 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
     }
   }
 
+  private fun test_usbcam(){
+    rtmpUSB = RtmpUSB(openglview, this)
+    usbMonitor = USBMonitor(this, onDeviceConnectListener)
+    isUsbOpen = false
+    usbMonitor.register()
+  }
+
   private fun startStream(url: String) {
     if (rtmpUSB.prepareVideo(width, height, fps, 4000 * 1024, false, 0,
         uvcCamera) && rtmpUSB.prepareAudio()) {
@@ -70,7 +78,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
   private val onDeviceConnectListener = object : USBMonitor.OnDeviceConnectListener {
     override fun onAttach(device: UsbDevice?) {
       if (device != null) {
-        Log.d("MAIN", "============== " + device.deviceName)
+        Log.d("MAIN", "onAttach============== " + device.deviceName)
       }
       usbMonitor.requestPermission(device)
     }
@@ -80,9 +88,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
       createNew: Boolean
     ) {
       if (device != null) {
-        Log.d("MAIN", "sssss============== " + device.deviceName)
+        Log.d("MAIN", "onConnect============== " + device.deviceName)
       }else{
-        Log.d("MAIN", "sssss============== Device null")
+        Log.d("MAIN", "onConnect============== Device null")
       }
       val camera = UVCCamera()
       Log.d("MAIN", ctrlBlock.toString())
@@ -99,9 +107,11 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
       }
       uvcCamera = camera
       rtmpUSB.startPreview(uvcCamera, width, height)
+      isUsbOpen = true
     }
 
     override fun onDisconnect(device: UsbDevice?, ctrlBlock: USBMonitor.UsbControlBlock?) {
+      Log.d("MAIN", "onDisConnect==============")
       if (uvcCamera != null) {
         uvcCamera?.close()
         uvcCamera = null
@@ -110,6 +120,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
     }
 
     override fun onDettach(device: UsbDevice?) {
+      Log.d("MAIN", "onDettach==============")
       if (uvcCamera != null) {
         uvcCamera?.close()
         uvcCamera = null
@@ -118,7 +129,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
     }
 
     override fun onCancel(device: UsbDevice?) {
-
+      Log.d("MAIN", "onCancel==============")
     }
   }
 
