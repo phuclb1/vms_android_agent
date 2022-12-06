@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/login_background"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".MainActivity">
 
@@ -11,22 +12,40 @@
         android:id="@+id/openglview"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
-
-    <EditText
+    <LinearLayout
         android:layout_centerHorizontal="true"
-        android:id="@+id/et_url"
-        android:hint="endpoint"
-        android:textColor="#f00"
-        android:textColorHint="#f00"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="match_parent"
+        android:gravity="bottom|center"
+        android:orientation="vertical">
 
-    <Button
-        android:id="@+id/start_stop"
-        android:text="Start Stream"
-        android:layout_alignParentBottom="true"
-        android:layout_marginStart="100dp"
-        android:layout_marginEnd="100dp"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        <EditText
+            android:layout_centerHorizontal="true"
+            android:id="@+id/et_url"
+            android:hint="Rtmp URL"
+            android:background="@drawable/login_edit_background"
+            android:textColor="@color/colorAccent"
+            android:textColorHint="@color/hintColor"
+            android:paddingStart="10dp"
+            android:padding="10dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:layout_marginEnd="20dp"
+            android:layout_marginTop="10dp"
+            />
+        <Button
+            android:layout_centerHorizontal="true"
+            android:id="@+id/start_stop"
+            android:text="@string/start"
+            android:background="@drawable/button_background"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="1dp"
+            android:layout_marginBottom="10dp"
+            android:layout_marginTop="5dp"
+            />
+
+    </LinearLayout>
+
 </RelativeLayout>

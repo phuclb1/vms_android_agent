@@ -10,6 +10,9 @@ interface AgentService {
     /*
        POST METHOD
     */
-    @POST(Constants.API_FS_LOGIN_URL)
+    @Headers(
+        "Content-type:application/json"
+    )
+    @POST(Constants.API_LOGIN_URL)
     fun login(@Body request: LoginRequest): Call<LoginResponse>
 }

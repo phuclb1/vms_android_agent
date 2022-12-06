@@ -15,18 +15,23 @@ import retrofit2.Response
 
 class LoginActivity : AppCompatActivity() {
     private val agentClient = AgentClient()
+    private lateinit var sessionManager: SessionManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
 
         agentClient.get_instance()
+        sessionManager = SessionManager(this)
 
-        et_username.setText("vibdemo")
-        et_password?.setText("123456aA@")
+        et_username.setText("vms@xmas.team")
+        et_password?.setText("123456a@")
 
         bt_login.setOnClickListener {
             onClickLogin()
+//            val intent = Intent(applicationContext, MainActivity::class.java)
+//            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+//            startActivity(intent)
         }
     }
 
@@ -52,12 +57,14 @@ class LoginActivity : AppCompatActivity() {
                     call: Call<LoginResponse>,
                     response: Response<LoginResponse>
                 ) {
+                    Log.d(TAG,response.toString())
                     val loginResponse = response.body()
-                    Log.d("Login", loginResponse?.authToken.toString())
+                    Log.d(TAG, loginResponse?.authToken.toString())
                     if(loginResponse?.authToken.isNullOrEmpty()){
                         Toast.makeText(applicationContext, "Login failure: code ${response.code()}", Toast.LENGTH_LONG).show()
                     }else{
-//                        authToken = loginResponse?.authToken.toString()
+                        val authToken = loginResponse?.authToken.toString()
+                        sessionManager.saveAuthToken(authToken)
                         val intent = Intent(applicationContext, MainActivity::class.java)
                         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                         startActivity(intent)
@@ -65,8 +72,13 @@ class LoginActivity : AppCompatActivity() {
                 }
 
                 override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
+                    Log.d(TAG, "Login failure ${t.message}")
                     Toast.makeText(applicationContext, "Login failure", Toast.LENGTH_LONG).show()
                 }
             })
+    }
+
+    companion object{
+        const val TAG = "Login"
     }
 }

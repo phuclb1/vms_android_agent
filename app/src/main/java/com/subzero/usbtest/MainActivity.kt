@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.support.v4.app.ActivityCompat
 import android.util.Log
 import android.view.SurfaceHolder
+import android.view.View
 import android.widget.Toast
 import com.subzero.usbtest.streamlib.RtmpUSB
 import com.serenegiant.usb.USBMonitor
@@ -16,17 +17,16 @@ import com.serenegiant.usb.UVCCamera
 import kotlinx.android.synthetic.main.activity_main.*
 import net.ossrs.rtmp.ConnectCheckerRtmp
 
-//val DEFAULT_RTMP_URL = "rtmp://113.161.183.245:1935/BPC_CAMJP01_abc123?user=admin&pass=Ab2C67e2021"
-val DEFAULT_RTMP_URL = "rtmp://103.160.75.240/live/livestream"
-
 class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
+  private lateinit var sessionManager: SessionManager
   private lateinit var usbMonitor: USBMonitor
+  private lateinit var rtmpUSB: RtmpUSB
   private var uvcCamera: UVCCamera? = null
-  private var isUsbOpen = true
+  private var isUsbOpen = false
   private val width = 1280
   private val height = 720
   private val fps = 15
-  private lateinit var rtmpUSB: RtmpUSB
+  private var token: String = ""
 
   private val permissions = arrayOf(
     Manifest.permission.RECORD_AUDIO,
@@ -38,49 +38,58 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_main)
 
+    sessionManager = SessionManager(this)
+    token = sessionManager.fetchAuthToken().toString()
+    val rtmpUrl = Constants.RTMP_URL_HEADER + token
+
     if (!hasPermissions()) {
-      ActivityCompat.requestPermissions(this, permissions, 1)
+      ActivityCompat.requestPermissions(this, Constants.CAMERA_REQUIRED_PERMISSIONS, 1)
     }
+
+    Log.d(TAG, "token: ${sessionManager.fetchAuthToken()}")
 
     rtmpUSB = RtmpUSB(openglview, this)
     usbMonitor = USBMonitor(this, onDeviceConnectListener)
     isUsbOpen = false
     usbMonitor.register()
-    et_url.setText(DEFAULT_RTMP_URL)
+
+    et_url.setText(rtmpUrl)
     start_stop.setOnClickListener {
-//      test_usbcam()
       if (uvcCamera != null) {
         if (!rtmpUSB.isStreaming) {
           startStream(et_url.text.toString())
-          start_stop.text = "Stop stream"
+          start_stop.text = getString(R.string.stop)
+          et_url.visibility = View.INVISIBLE
         } else {
           rtmpUSB.stopStream(uvcCamera)
-          start_stop.text = "Start stream"
+          start_stop.text = getString(R.string.start)
+          et_url.visibility = View.VISIBLE
         }
       }
     }
   }
 
-  private fun test_usbcam(){
-    rtmpUSB = RtmpUSB(openglview, this)
-    usbMonitor = USBMonitor(this, onDeviceConnectListener)
-    isUsbOpen = false
-    usbMonitor.register()
-  }
-
-  private fun startStream(url: String) {
-    if (rtmpUSB.prepareVideo(width, height, fps, 4000 * 1024, false, 0,
-        uvcCamera) && rtmpUSB.prepareAudio()) {
-      rtmpUSB.startStream(uvcCamera, url)
+  override fun onDestroy() {
+    super.onDestroy()
+    Log.d(TAG, "Main activity ======== onDestroy")
+    if (rtmpUSB.isStreaming && uvcCamera != null) rtmpUSB.stopStream(uvcCamera)
+    if (rtmpUSB.isOnPreview && uvcCamera != null) rtmpUSB.stopPreview(uvcCamera)
+    if (isUsbOpen) {
+      uvcCamera?.close()
+      usbMonitor.unregister()
     }
   }
 
+
+  /**
+   * USB Monitor
+   */
   private val onDeviceConnectListener = object : USBMonitor.OnDeviceConnectListener {
     override fun onAttach(device: UsbDevice?) {
       if (device != null) {
-        Log.d("MAIN", "onAttach============== " + device.deviceName)
+        Log.d(TAG, "onAttach============== " + device.deviceName)
+        usbMonitor.requestPermission(device)
       }
-      usbMonitor.requestPermission(device)
     }
 
     override fun onConnect(
@@ -88,12 +97,13 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
       createNew: Boolean
     ) {
       if (device != null) {
-        Log.d("MAIN", "onConnect============== " + device.deviceName)
+        Log.d(TAG, "onConnect============== " + device.deviceName)
       }else{
-        Log.d("MAIN", "onConnect============== Device null")
+        Log.d(TAG, "onConnect============== Device null")
+        return
       }
       val camera = UVCCamera()
-      Log.d("MAIN", ctrlBlock.toString())
+      Log.d(TAG, ctrlBlock.toString())
       camera.open(ctrlBlock)
       try {
         camera.setPreviewSize(width, height, UVCCamera.FRAME_FORMAT_MJPEG)
@@ -111,16 +121,17 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
     }
 
     override fun onDisconnect(device: UsbDevice?, ctrlBlock: USBMonitor.UsbControlBlock?) {
-      Log.d("MAIN", "onDisConnect==============")
+      Log.d(TAG, "onDisConnect==============")
       if (uvcCamera != null) {
         uvcCamera?.close()
+//        usbMonitor.unregister()
         uvcCamera = null
         isUsbOpen = false
       }
     }
 
     override fun onDettach(device: UsbDevice?) {
-      Log.d("MAIN", "onDettach==============")
+      Log.d(TAG, "onDettach==============")
       if (uvcCamera != null) {
         uvcCamera?.close()
         uvcCamera = null
@@ -129,12 +140,18 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
     }
 
     override fun onCancel(device: UsbDevice?) {
-      Log.d("MAIN", "onCancel==============")
+      Log.d(TAG, "onCancel==============")
     }
   }
 
 
+  /**
+   * Rtmp
+   */
   override fun onAuthSuccessRtmp() {
+  }
+
+  override fun onAuthErrorRtmp() {
   }
 
   override fun onConnectionSuccessRtmp() {
@@ -150,15 +167,16 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
     }
   }
 
-  override fun onAuthErrorRtmp() {
-  }
-
   override fun onDisconnectRtmp() {
     runOnUiThread {
       Toast.makeText(this, "Disconnect", Toast.LENGTH_SHORT).show()
     }
   }
 
+
+  /**
+   * Surface
+   */
   override fun surfaceChanged(p0: SurfaceHolder?, p1: Int, p2: Int, p3: Int) {
   }
 
@@ -170,24 +188,24 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
 
   }
 
-  override fun onDestroy() {
-    super.onDestroy()
-      if (rtmpUSB.isStreaming && uvcCamera != null) rtmpUSB.stopStream(uvcCamera)
-    if (rtmpUSB.isOnPreview && uvcCamera != null) rtmpUSB.stopPreview(uvcCamera)
-    if (isUsbOpen) {
-      uvcCamera?.close()
-      usbMonitor.unregister()
-    }
-  }
 
   private fun hasPermissions(): Boolean {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-      for (permission in permissions) {
-        if (PackageManager.PERMISSION_GRANTED != ActivityCompat.checkSelfPermission(this, permission)) {
-          return false
-        }
+    for (permission in Constants.CAMERA_REQUIRED_PERMISSIONS) {
+      if (PackageManager.PERMISSION_GRANTED != ActivityCompat.checkSelfPermission(this, permission)) {
+        return false
       }
     }
     return true
+  }
+
+  private fun startStream(url: String) {
+    if (rtmpUSB.prepareVideo(width, height, fps, 4000 * 1024, false, 0,
+        uvcCamera) && rtmpUSB.prepareAudio()) {
+      rtmpUSB.startStream(uvcCamera, url)
+    }
+  }
+
+  companion object{
+    const val TAG = "Main"
   }
 }
