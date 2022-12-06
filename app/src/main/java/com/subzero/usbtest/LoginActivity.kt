@@ -28,23 +28,27 @@ class LoginActivity : AppCompatActivity() {
         et_password?.setText("123456a@")
 
         bt_login.setOnClickListener {
-            onClickLogin()
+            bt_login.background = getDrawable(R.drawable.button_background_disabled)
+            val result = onClickLogin()
+
 //            val intent = Intent(applicationContext, MainActivity::class.java)
 //            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
 //            startActivity(intent)
         }
     }
 
-    private fun onClickLogin(){
+    private fun onClickLogin():Boolean{
         if(et_username.text.isNullOrBlank()){
             Toast.makeText(this, "Please enter username!", Toast.LENGTH_SHORT).show()
             et_username.requestFocus()
-            return
+            bt_login.background = getDrawable(R.drawable.button_background)
+            return true
         }
         if(et_password.text.isNullOrBlank()){
             Toast.makeText(this, "Please enter password!", Toast.LENGTH_SHORT).show()
             et_password.requestFocus()
-            return
+            bt_login.background = getDrawable(R.drawable.button_background)
+            return true
         }
 
         agentClient.get_instance().login(
@@ -62,6 +66,7 @@ class LoginActivity : AppCompatActivity() {
                     Log.d(TAG, loginResponse?.authToken.toString())
                     if(loginResponse?.authToken.isNullOrEmpty()){
                         Toast.makeText(applicationContext, "Login failure: code ${response.code()}", Toast.LENGTH_LONG).show()
+                        bt_login.background = getDrawable(R.drawable.button_background)
                     }else{
                         val authToken = loginResponse?.authToken.toString()
                         sessionManager.saveAuthToken(authToken)
@@ -74,8 +79,11 @@ class LoginActivity : AppCompatActivity() {
                 override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
                     Log.d(TAG, "Login failure ${t.message}")
                     Toast.makeText(applicationContext, "Login failure", Toast.LENGTH_LONG).show()
+                    bt_login.background = getDrawable(R.drawable.button_background)
                 }
             })
+
+        return true
     }
 
     companion object{
