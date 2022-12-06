@@ -1,10 +1,8 @@
 package com.subzero.usbtest
 
-import android.Manifest
 import android.app.Activity
 import android.content.pm.PackageManager
 import android.hardware.usb.UsbDevice
-import android.os.Build
 import android.os.Bundle
 import android.support.v4.app.ActivityCompat
 import android.util.Log
@@ -28,12 +26,6 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
   private val fps = 15
   private var token: String = ""
 
-  private val permissions = arrayOf(
-    Manifest.permission.RECORD_AUDIO,
-    Manifest.permission.CAMERA,
-    Manifest.permission.WRITE_EXTERNAL_STORAGE
-  )
-
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_main)
@@ -41,12 +33,11 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
     sessionManager = SessionManager(this)
     token = sessionManager.fetchAuthToken().toString()
     val rtmpUrl = Constants.RTMP_URL_HEADER + token
+    Log.d(TAG, "RTMP url: $rtmpUrl")
 
     if (!hasPermissions()) {
       ActivityCompat.requestPermissions(this, Constants.CAMERA_REQUIRED_PERMISSIONS, 1)
     }
-
-    Log.d(TAG, "token: ${sessionManager.fetchAuthToken()}")
 
     rtmpUSB = RtmpUSB(openglview, this)
     usbMonitor = USBMonitor(this, onDeviceConnectListener)
@@ -57,13 +48,11 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
     start_stop.setOnClickListener {
       if (uvcCamera != null) {
         if (!rtmpUSB.isStreaming) {
+          updateUI(isStream = true)
           startStream(et_url.text.toString())
-          start_stop.text = getString(R.string.stop)
-          et_url.visibility = View.INVISIBLE
         } else {
+          updateUI(isStream = false)
           rtmpUSB.stopStream(uvcCamera)
-          start_stop.text = getString(R.string.start)
-          et_url.visibility = View.VISIBLE
         }
       }
     }
@@ -123,6 +112,11 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
     override fun onDisconnect(device: UsbDevice?, ctrlBlock: USBMonitor.UsbControlBlock?) {
       Log.d(TAG, "onDisConnect==============")
       if (uvcCamera != null) {
+        updateUI(isStream = false)
+        if(rtmpUSB.isStreaming){
+          rtmpUSB.stopStream(uvcCamera)
+        }
+
         uvcCamera?.close()
 //        usbMonitor.unregister()
         uvcCamera = null
@@ -169,6 +163,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
 
   override fun onDisconnectRtmp() {
     runOnUiThread {
+      updateUI(isStream = false)
+      rtmpUSB.stopStream(uvcCamera)
       Toast.makeText(this, "Disconnect", Toast.LENGTH_SHORT).show()
     }
   }
@@ -202,6 +198,16 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
     if (rtmpUSB.prepareVideo(width, height, fps, 4000 * 1024, false, 0,
         uvcCamera) && rtmpUSB.prepareAudio()) {
       rtmpUSB.startStream(uvcCamera, url)
+    }
+  }
+
+  private fun updateUI(isStream: Boolean){
+    if(isStream){
+      start_stop.text = getString(R.string.stop)
+      et_url.visibility = View.INVISIBLE
+    }else{
+      start_stop.text = getString(R.string.start)
+      et_url.visibility = View.VISIBLE
     }
   }
 
