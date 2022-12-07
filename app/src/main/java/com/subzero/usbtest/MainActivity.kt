@@ -4,16 +4,18 @@ import android.app.Activity
 import android.content.pm.PackageManager
 import android.hardware.usb.UsbDevice
 import android.os.Bundle
+import android.os.Environment
 import android.support.v4.app.ActivityCompat
 import android.util.Log
 import android.view.SurfaceHolder
 import android.view.View
 import android.widget.Toast
-import com.subzero.usbtest.streamlib.RtmpUSB
 import com.serenegiant.usb.USBMonitor
 import com.serenegiant.usb.UVCCamera
+import com.subzero.usbtest.streamlib.RtmpUSB
 import kotlinx.android.synthetic.main.activity_main.*
 import net.ossrs.rtmp.ConnectCheckerRtmp
+import java.io.File
 
 class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
   private lateinit var sessionManager: SessionManager
@@ -32,7 +34,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
 
     sessionManager = SessionManager(this)
     token = sessionManager.fetchAuthToken().toString()
-    val rtmpUrl = Constants.RTMP_URL_HEADER + token
+//    val rtmpUrl = Constants.RTMP_URL_HEADER + token
+    val rtmpUrl = "${Constants.RTMP_URL_HEADER}livestream"
     Log.d(TAG, "RTMP url: $rtmpUrl")
 
     if (!hasPermissions()) {
@@ -43,6 +46,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
     usbMonitor = USBMonitor(this, onDeviceConnectListener)
     isUsbOpen = false
     usbMonitor.register()
+
+    val root = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).absolutePath + File.separator
+    Log.d(TAG, "------------ $root")
 
     et_url.setText(rtmpUrl)
     start_stop.setOnClickListener {
@@ -55,6 +61,25 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
           rtmpUSB.stopStream(uvcCamera)
         }
       }
+    }
+
+    btn_record.setOnClickListener {
+
+      if(uvcCamera != null){
+        if(!rtmpUSB.isRecording) {
+          Log.d(TAG, "====== recording")
+          try{
+            startRecord("$root/rtmp_test.mp4")
+          }catch (e: java.lang.Exception){
+            Log.d(TAG, "record exception: ${e.message}")
+          }
+        }
+        else {
+          rtmpUSB.stopRecord(uvcCamera)
+          Toast.makeText(this, "Saved: ${root}/rtmp_test.mp}", Toast.LENGTH_SHORT).show()
+        }
+      }
+
     }
   }
 
@@ -69,6 +94,17 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
     }
   }
 
+//  override fun onStart() {
+//    super.onStart()
+////    if (isUsbOpen){
+//      usbMonitor.register()
+////    }
+//  }
+//
+//  override fun onStop() {
+//    super.onStop()
+//    usbMonitor.unregister()
+//  }
 
   /**
    * USB Monitor
@@ -118,7 +154,6 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
         }
 
         uvcCamera?.close()
-//        usbMonitor.unregister()
         uvcCamera = null
         isUsbOpen = false
       }
@@ -199,6 +234,13 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
         uvcCamera) && rtmpUSB.prepareAudio()) {
       rtmpUSB.startStream(uvcCamera, url)
     }
+  }
+
+  private fun startRecord(url: String){
+//    if (rtmpUSB.prepareVideo(width, height, fps, 4000 * 1024, false, 0, uvcCamera) && rtmpUSB.prepareAudio()) {
+      rtmpUSB.startRecord(uvcCamera, url)
+
+//    }
   }
 
   private fun updateUI(isStream: Boolean){
