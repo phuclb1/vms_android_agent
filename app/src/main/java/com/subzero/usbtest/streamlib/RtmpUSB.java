@@ -83,7 +83,7 @@ public class RtmpUSB extends USBBase {
         }
     }
 
-    public boolean reconnectRtp(String reason, long delayMilis){
+    public boolean reconnectRtp(String reason, final long delayMilis){
         boolean shouldRetry = srsFlvMuxer.shouldRetry(reason);
         if(shouldRetry){
             srsFlvMuxer.reConnect(delayMilis);

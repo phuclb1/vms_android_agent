@@ -4,7 +4,6 @@ import android.app.Activity
 import android.content.pm.PackageManager
 import android.hardware.usb.UsbDevice
 import android.os.Bundle
-import android.os.Environment
 import android.support.v4.app.ActivityCompat
 import android.util.Log
 import android.view.SurfaceHolder
@@ -15,7 +14,6 @@ import com.serenegiant.usb.UVCCamera
 import com.subzero.usbtest.streamlib.RtmpUSB
 import kotlinx.android.synthetic.main.activity_main.*
 import net.ossrs.rtmp.ConnectCheckerRtmp
-import java.io.File
 
 class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
   private lateinit var sessionManager: SessionManager
@@ -43,55 +41,40 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
       ActivityCompat.requestPermissions(this, Constants.CAMERA_REQUIRED_PERMISSIONS, 1)
     }
 
+    et_url.setText(rtmpUrl)
+
     rtmpUSB = RtmpUSB(openglview, this)
     usbMonitor = USBMonitor(this, onDeviceConnectListener)
     isUsbOpen = false
     usbMonitor.register()
-
-    rtmpUSB.setNumRetriesConnect(10)
+    rtmpUSB.setNumRetriesConnect(1000)
 
     if (!folderRecord.exists()){
       folderRecord.mkdirs()
     }
     Log.d(TAG, "------------ $folderRecord")
 
-    et_url.setText(rtmpUrl)
     start_stop.setOnClickListener {
       if (uvcCamera != null) {
         if (!rtmpUSB.isStreaming) {
-          updateUI(isStream = true)
-          startStream(et_url.text.toString())
+          callStartStream(et_url.text.toString())
+          updateUIStream()
         } else {
-          updateUI(isStream = false)
-          rtmpUSB.stopStream(uvcCamera)
+          callStopStream()
+          updateUIStream()
         }
       }
     }
 
-    tv_record.text = "No Recording"
-    btn_record.setOnClickListener {
-      if(uvcCamera != null){
-        val currentTimestamp = System.currentTimeMillis()
-        val fileRecord = "$folderRecord/$currentTimestamp.mp4"
-        if(!rtmpUSB.isRecording) {
-          Log.d(TAG, "====== recording")
-          startRecord(fileRecord)
-        }
-        else {
-          rtmpUSB.stopRecord(uvcCamera)
-          Toast.makeText(this, "Saved: ${fileRecord}}", Toast.LENGTH_SHORT).show()
-        }
-      }
-
-    }
+    updateUIStream()
+    updateRecordStatus()
   }
 
   override fun onDestroy() {
     super.onDestroy()
     Log.d(TAG, "Main activity ======== onDestroy")
-    if (rtmpUSB.isStreaming && uvcCamera != null) rtmpUSB.stopStream(uvcCamera)
+    if (rtmpUSB.isStreaming && uvcCamera != null) callStopStream()
     if (rtmpUSB.isOnPreview && uvcCamera != null) rtmpUSB.stopPreview(uvcCamera)
-    if (rtmpUSB.isRecording && uvcCamera != null) rtmpUSB.stopRecord(uvcCamera)
     if (isUsbOpen) {
       uvcCamera?.close()
       usbMonitor.unregister()
@@ -140,10 +123,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
     override fun onDisconnect(device: UsbDevice?, ctrlBlock: USBMonitor.UsbControlBlock?) {
       Log.d(TAG, "onDisConnect==============")
       if (uvcCamera != null) {
-        updateUI(isStream = false)
-        if(rtmpUSB.isStreaming){
-          rtmpUSB.stopStream(uvcCamera)
-        }
+        updateUIStream()
+        callStopStream()
 
         uvcCamera?.close()
         uvcCamera = null
@@ -176,33 +157,31 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
   }
 
   override fun onConnectionSuccessRtmp() {
-    // TODO: stop record
-    if (rtmpUSB.isRecording && uvcCamera != null){
-      rtmpUSB.stopRecord(uvcCamera)
-    }
+    callStopRecord()
+    updateRecordStatus()
     runOnUiThread {
       Toast.makeText(this, "Rtmp connection success", Toast.LENGTH_SHORT).show()
-      tv_record.text = "No Record"
       // TODO: upload recorded file
     }
   }
 
+  /*
+  Auto record video
+  Try reconnect
+  Upload recorded video when reconnected
+  * */
   override fun onConnectionFailedRtmp(reason: String?) {
-    // TODO: start record
-    if(rtmpUSB.isStreaming && uvcCamera != null){
-      val currentTimestamp = System.currentTimeMillis()
-      val fileRecord = "$folderRecord/$currentTimestamp.mp4"
-      startRecord(fileRecord)
-    }
+    val currentTimestamp = System.currentTimeMillis()
+    val fileRecord = "$folderRecord/$currentTimestamp.mp4"
+    val record = callStartRecord(fileRecord)
+
     val reconnect = rtmpUSB.reconnectRtp(reason, 1000)
     if (!reconnect){
-      rtmpUSB.stopStream(uvcCamera)
+      callStopStream()
     }
 
+    updateRecordStatus()
     runOnUiThread {
-      if(rtmpUSB.isStreaming && uvcCamera != null){
-        tv_record.text = "Recording"
-      }
       if (!reconnect){
         Toast.makeText(this, "Rtmp connection failed! $reason", Toast.LENGTH_SHORT).show()
       }
@@ -211,8 +190,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
 
   override fun onDisconnectRtmp() {
     runOnUiThread {
-      updateUI(isStream = false)
-      rtmpUSB.stopStream(uvcCamera)
+      updateUIStream()
+      callStopStream()
       Toast.makeText(this, "Disconnect", Toast.LENGTH_SHORT).show()
     }
   }
@@ -237,30 +216,68 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
     return true
   }
 
-  private fun startStream(url: String) {
+
+  /**
+   * RTMP Stream Start/Stop
+   */
+  private fun callStartStream(url: String) {
     if (rtmpUSB.prepareVideo(width, height, fps, 4000 * 1024, false, 0,
         uvcCamera) && rtmpUSB.prepareAudio()) {
       rtmpUSB.startStream(uvcCamera, url)
     }
   }
 
-  private fun startRecord(url: String){
-    try{
-      rtmpUSB.startRecord(uvcCamera, url)
-    }
-    catch (e: java.lang.Exception){
-      Log.d(TAG, "record exception: ${e.message}")
-      Toast.makeText(this, "record exception: ${e.message}", Toast.LENGTH_SHORT).show()
+  private fun callStopStream(){
+    if(rtmpUSB.isStreaming && uvcCamera != null){
+      rtmpUSB.stopStream(uvcCamera)
+      callStopRecord()
     }
   }
 
-  private fun updateUI(isStream: Boolean){
-    if(isStream){
+  /**
+   * Record Start/Stop
+   */
+  private fun callStartRecord(url: String):Boolean{
+    if(rtmpUSB.isStreaming && !rtmpUSB.isRecording && uvcCamera != null){
+      try{
+        rtmpUSB.startRecord(uvcCamera, url)
+        return true
+      }
+      catch (e: java.lang.Exception){
+        Log.d(TAG, "record exception: ${e.message}")
+        Toast.makeText(this, "record exception: ${e.message}", Toast.LENGTH_SHORT).show()
+      }
+    }
+    return false
+  }
+
+  private fun callStopRecord(){
+    if(rtmpUSB.isRecording && uvcCamera != null){
+      rtmpUSB.stopRecord(uvcCamera)
+    }
+  }
+
+
+  /**
+   * Update UI
+   */
+  private fun updateUIStream(){
+    if(rtmpUSB.isStreaming){
       start_stop.text = getString(R.string.stop)
       et_url.visibility = View.INVISIBLE
     }else{
       start_stop.text = getString(R.string.start)
       et_url.visibility = View.VISIBLE
+    }
+  }
+
+  private fun updateRecordStatus(){
+    runOnUiThread{
+      if (rtmpUSB.isRecording){
+        tv_record.visibility = View.VISIBLE
+      }else{
+        tv_record.visibility = View.INVISIBLE
+      }
     }
   }
 
