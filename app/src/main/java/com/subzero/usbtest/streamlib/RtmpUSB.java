@@ -77,6 +77,20 @@ public class RtmpUSB extends USBBase {
         srsFlvMuxer.stop();
     }
 
+    public void setNumRetriesConnect(Integer num){
+        if(num > 0){
+            srsFlvMuxer.setReTries(num);
+        }
+    }
+
+    public boolean reconnectRtp(String reason, long delayMilis){
+        boolean shouldRetry = srsFlvMuxer.shouldRetry(reason);
+        if(shouldRetry){
+            srsFlvMuxer.reConnect(delayMilis);
+        }
+        return shouldRetry;
+    }
+
     @Override
     protected void getAacDataRtp(ByteBuffer aacBuffer, MediaCodec.BufferInfo info) {
         srsFlvMuxer.sendAudio(aacBuffer, info);
