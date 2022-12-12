@@ -77,8 +77,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
     if (rtmpUSB.isOnPreview && uvcCamera != null) rtmpUSB.stopPreview(uvcCamera)
     if (isUsbOpen) {
       uvcCamera?.close()
-      usbMonitor.unregister()
     }
+    usbMonitor.unregister()
   }
 
   /**
