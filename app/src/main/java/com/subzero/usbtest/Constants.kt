@@ -7,9 +7,11 @@ import android.os.Environment
 import java.io.File
 
 object Constants {
+    const val ENABLE_SAVE_LOG = true
     // API
     const val BASE_URL = "http://103.160.75.240:30084/api/v1/"
     const val API_LOGIN_URL = "auth/sign-in"
+    const val API_UPLOAD_VIDEO = "video/upload?"
 
     //    const val DEFAULT_RTMP_URL = "rtmp://113.161.183.245:1935/BPC_CAMJP01_abc123?user=admin&pass=Ab2C67e2021"
     const val RTMP_URL_HEADER = "rtmp://103.160.75.240/live/"
@@ -22,10 +24,12 @@ object Constants {
     val CAMERA_REQUIRED_PERMISSIONS =
         mutableListOf (
             Manifest.permission.CAMERA,
-            Manifest.permission.RECORD_AUDIO
+            Manifest.permission.RECORD_AUDIO,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.READ_EXTERNAL_STORAGE
         ).apply {
             if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
-                add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+//                add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
             }
         }.toTypedArray()
 }

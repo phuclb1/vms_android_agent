@@ -16,6 +16,7 @@ import retrofit2.Response
 class LoginActivity : AppCompatActivity() {
     private val agentClient = AgentClient()
     private lateinit var sessionManager: SessionManager
+    private val logService = LogService.getInstance()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -24,8 +25,8 @@ class LoginActivity : AppCompatActivity() {
         agentClient.get_instance()
         sessionManager = SessionManager(this)
 
-        et_username.setText("vms@xmas.team")
-        et_password?.setText("123456a@")
+        et_username.setText("agent_android@gmail.com")
+        et_password?.setText("123456aA@")
 
         bt_login.setOnClickListener {
             bt_login.background = getDrawable(R.drawable.button_background_disabled)
@@ -57,25 +58,27 @@ class LoginActivity : AppCompatActivity() {
                     call: Call<LoginResponse>,
                     response: Response<LoginResponse>
                 ) {
-                    Log.d(TAG,response.toString())
+                    logService.appendLog(text = response.toString(), tag = TAG)
                     val loginResponse = response.body()
-                    Log.d(TAG, loginResponse?.authToken.toString())
+                    logService.appendLog(text = loginResponse?.authToken.toString(), tag = TAG)
                     if(loginResponse?.authToken.isNullOrEmpty()){
                         Toast.makeText(applicationContext, "Login failure: code ${response.code()}", Toast.LENGTH_LONG).show()
                         bt_login.background = getDrawable(R.drawable.button_background)
+                        logService.appendLog(text = "Token null", tag = TAG)
                     }else{
                         val authToken = loginResponse?.authToken.toString()
                         sessionManager.saveAuthToken(authToken)
                         val intent = Intent(applicationContext, MainActivity::class.java)
                         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                         startActivity(intent)
+                        logService.appendLog("Login success", TAG)
                     }
                 }
 
                 override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
-                    Log.d(TAG, "Login failure ${t.message}")
                     Toast.makeText(applicationContext, "Login failure", Toast.LENGTH_LONG).show()
                     bt_login.background = getDrawable(R.drawable.button_background)
+                    logService.appendLog("Login response fail", TAG)
                 }
             })
 

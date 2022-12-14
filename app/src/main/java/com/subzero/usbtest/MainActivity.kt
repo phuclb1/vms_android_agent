@@ -3,6 +3,7 @@ package com.subzero.usbtest
 import android.app.Activity
 import android.content.pm.PackageManager
 import android.hardware.usb.UsbDevice
+import android.net.Uri
 import android.os.Bundle
 import android.support.v4.app.ActivityCompat
 import android.util.Log
@@ -11,11 +12,19 @@ import android.view.View
 import android.widget.Toast
 import com.serenegiant.usb.USBMonitor
 import com.serenegiant.usb.UVCCamera
+import com.subzero.usbtest.api.AgentClient
 import com.subzero.usbtest.streamlib.RtmpUSB
 import kotlinx.android.synthetic.main.activity_main.*
 import net.ossrs.rtmp.ConnectCheckerRtmp
+import okhttp3.*
+import org.json.JSONArray
+import org.json.JSONException
+import org.json.JSONObject
+import java.io.File
+import java.io.IOException
 
 class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
+  private val agentClient = AgentClient()
   private lateinit var sessionManager: SessionManager
   private lateinit var usbMonitor: USBMonitor
   private lateinit var rtmpUSB: RtmpUSB
@@ -26,6 +35,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
   private val fps = 15
   private var token: String = ""
   private val folderRecord = Constants.RECORD_FOLDER
+  private var flagRecording = false
+  private var fileRecording: String = ""
+  private val logService = LogService.getInstance()
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -33,9 +45,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
 
     sessionManager = SessionManager(this)
     token = sessionManager.fetchAuthToken().toString()
-//    val rtmpUrl = Constants.RTMP_URL_HEADER + token
-    val rtmpUrl = "${Constants.RTMP_URL_HEADER}livestream"
-    Log.d(TAG, "RTMP url: $rtmpUrl")
+    val rtmpUrl = Constants.RTMP_URL_HEADER + token
+//    val rtmpUrl = "${Constants.RTMP_URL_HEADER}livestream"
+    logService.appendLog("RTMP url: $rtmpUrl", TAG)
 
     if (!hasPermissions()) {
       ActivityCompat.requestPermissions(this, Constants.CAMERA_REQUIRED_PERMISSIONS, 1)
@@ -52,7 +64,6 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
     if (!folderRecord.exists()){
       folderRecord.mkdirs()
     }
-    Log.d(TAG, "------------ $folderRecord")
 
     start_stop.setOnClickListener {
       if (uvcCamera != null) {
@@ -66,13 +77,32 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
       }
     }
 
+//    btn_record.setOnClickListener{
+//      if(rtmpUSB.isRecording){
+//        callStopRecord()
+//        Toast.makeText(this, "Stop record", Toast.LENGTH_SHORT).show()
+//      }else{
+//        val currentTimestamp = System.currentTimeMillis()
+//        val fileRecord = "$folderRecord/$currentTimestamp.mp4"
+//        val record = callStartRecord(fileRecord)
+//        if(record){
+//          fileRecording = fileRecord
+//          Toast.makeText(this, "Start record", Toast.LENGTH_SHORT).show()
+//        }
+//      }
+//    }
+//    btn_upload.setOnClickListener{
+//      val file = File("/storage/emulated/0/DCIM/UsbStream/1670603380890.mp4")
+//      uploadVideo(file)
+//    }
+
     updateUIStream()
     updateRecordStatus()
   }
 
   override fun onDestroy() {
     super.onDestroy()
-    Log.d(TAG, "Main activity ======== onDestroy")
+    logService.appendLog("MainActivity ---- onDestroy", TAG)
     if (rtmpUSB.isStreaming && uvcCamera != null) callStopStream()
     if (rtmpUSB.isOnPreview && uvcCamera != null) rtmpUSB.stopPreview(uvcCamera)
     if (isUsbOpen) {
@@ -86,8 +116,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
    */
   private val onDeviceConnectListener = object : USBMonitor.OnDeviceConnectListener {
     override fun onAttach(device: UsbDevice?) {
+      logService.appendLog("onDeviceConnectListener ---- onAttach", TAG)
       if (device != null) {
-        Log.d(TAG, "onAttach============== " + device.deviceName)
         usbMonitor.requestPermission(device)
       }
     }
@@ -97,9 +127,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
       createNew: Boolean
     ) {
       if (device != null) {
-        Log.d(TAG, "onConnect============== " + device.deviceName)
+        logService.appendLog("onDeviceConnectListener ---- ${device.deviceName}", TAG)
       }else{
-        Log.d(TAG, "onConnect============== Device null")
+        logService.appendLog("onDeviceConectListener ---- device null", TAG)
         return
       }
       val camera = UVCCamera()
@@ -121,7 +151,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
     }
 
     override fun onDisconnect(device: UsbDevice?, ctrlBlock: USBMonitor.UsbControlBlock?) {
-      Log.d(TAG, "onDisConnect==============")
+      logService.appendLog("MainActivity onDisconnect", TAG)
       if (uvcCamera != null) {
         updateUIStream()
         callStopStream()
@@ -133,7 +163,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
     }
 
     override fun onDettach(device: UsbDevice?) {
-      Log.d(TAG, "onDettach==============")
+      logService.appendLog("MainActivity onDetach", TAG)
       if (uvcCamera != null) {
         uvcCamera?.close()
         uvcCamera = null
@@ -142,7 +172,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
     }
 
     override fun onCancel(device: UsbDevice?) {
-      Log.d(TAG, "onCancel==============")
+      logService.appendLog("MainActivity onCancel", TAG)
     }
   }
 
@@ -157,6 +187,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
   }
 
   override fun onConnectionSuccessRtmp() {
+    logService.appendLog("connect rtmp success", TAG)
     callStopRecord()
     updateRecordStatus()
     runOnUiThread {
@@ -171,9 +202,15 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
   Upload recorded video when reconnected
   * */
   override fun onConnectionFailedRtmp(reason: String?) {
-    val currentTimestamp = System.currentTimeMillis()
-    val fileRecord = "$folderRecord/$currentTimestamp.mp4"
-    val record = callStartRecord(fileRecord)
+    logService.appendLog("connect rtmp fail", TAG)
+    if(!rtmpUSB.isRecording){
+      val currentTimestamp = System.currentTimeMillis()
+      val fileRecord = "$folderRecord/$currentTimestamp.mp4"
+      val record = callStartRecord(fileRecord)
+      if(record){
+        fileRecording = fileRecord
+      }
+    }
 
     val reconnect = rtmpUSB.reconnectRtp(reason, 1000)
     if (!reconnect){
@@ -189,9 +226,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
   }
 
   override fun onDisconnectRtmp() {
+    logService.appendLog("disconnect rtmp", TAG)
+    callStopStream()
     runOnUiThread {
       updateUIStream()
-      callStopStream()
       Toast.makeText(this, "Disconnect", Toast.LENGTH_SHORT).show()
     }
   }
@@ -221,6 +259,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
    * RTMP Stream Start/Stop
    */
   private fun callStartStream(url: String) {
+    logService.appendLog("call start stream", TAG)
     if (rtmpUSB.prepareVideo(width, height, fps, 4000 * 1024, false, 0,
         uvcCamera) && rtmpUSB.prepareAudio()) {
       rtmpUSB.startStream(uvcCamera, url)
@@ -228,6 +267,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
   }
 
   private fun callStopStream(){
+    logService.appendLog("call stop stream", TAG)
     if(rtmpUSB.isStreaming && uvcCamera != null){
       rtmpUSB.stopStream(uvcCamera)
       callStopRecord()
@@ -238,13 +278,21 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
    * Record Start/Stop
    */
   private fun callStartRecord(url: String):Boolean{
-    if(rtmpUSB.isStreaming && !rtmpUSB.isRecording && uvcCamera != null){
+//    logService.appendLog("call start record", TAG)
+    if(rtmpUSB.isStreaming && !rtmpUSB.isRecording && uvcCamera != null && !flagRecording){
+      flagRecording = true
       try{
-        rtmpUSB.startRecord(uvcCamera, url)
-        return true
+        logService.appendLog("started record: $url", TAG)
+        try {
+          rtmpUSB.startRecord(uvcCamera, url)
+          return true
+        }catch (e: IOException){
+          flagRecording = false
+        }
       }
       catch (e: java.lang.Exception){
-        Log.d(TAG, "record exception: ${e.message}")
+        flagRecording = false
+        logService.appendLog("record error: ${e.message}", TAG)
         Toast.makeText(this, "record exception: ${e.message}", Toast.LENGTH_SHORT).show()
       }
     }
@@ -254,6 +302,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
   private fun callStopRecord(){
     if(rtmpUSB.isRecording && uvcCamera != null){
       rtmpUSB.stopRecord(uvcCamera)
+      flagRecording = false
+      uploadVideo(File(fileRecording))
     }
   }
 
@@ -279,6 +329,39 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
         tv_record.visibility = View.INVISIBLE
       }
     }
+  }
+
+  private fun uploadVideo(file: File){
+    logService.appendLog("======== upload video ${file.absolutePath}    ${file.name}")
+    val mediaType = MediaType.parse("text/plain")
+    val requestBody = RequestBody.create(MediaType.parse("application/octet-stream"), file)
+    val body = MultipartBody
+      .Builder()
+      .setType(MultipartBody.FORM)
+      .addFormDataPart("video_file", file.name, requestBody)
+      .build()
+    val request = Request.Builder()
+      .url("${Constants.BASE_URL}${Constants.API_UPLOAD_VIDEO}")
+      .method("POST", body)
+      .addHeader("Authorization", "Bearer $token")
+      .build()
+    agentClient.getClientOkhttpInstance().newCall(request).enqueue(object: okhttp3.Callback {
+      override fun onFailure(call: Call, e: IOException) {
+        logService.appendLog("upload video failed: ${e.message.toString()}", TAG)
+        runOnUiThread {
+          Toast.makeText(this@MainActivity, "Upload failed: ${e.message.toString()}", Toast.LENGTH_SHORT).show()
+        }
+      }
+
+      override fun onResponse(call: Call, response: Response) {
+        val responseData = response.body().toString()
+        logService.appendLog("upload video success: $responseData", TAG)
+        runOnUiThread {
+          Toast.makeText(this@MainActivity, "Upload success $responseData", Toast.LENGTH_SHORT).show()
+        }
+      }
+
+    })
   }
 
   companion object{
