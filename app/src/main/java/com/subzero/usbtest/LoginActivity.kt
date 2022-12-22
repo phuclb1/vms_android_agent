@@ -25,12 +25,16 @@ class LoginActivity : AppCompatActivity() {
         agentClient.get_instance()
         sessionManager = SessionManager(this)
 
-        et_username.setText("agent_android@gmail.com")
+        et_username.setText("agent1")
         et_password?.setText("123456aA@")
 
         bt_login.setOnClickListener {
             bt_login.background = getDrawable(R.drawable.button_background_disabled)
             val result = onClickLogin()
+
+//            val intent = Intent(applicationContext, MainActivity::class.java)
+//            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+//            startActivity(intent)
         }
     }
 
@@ -49,7 +53,7 @@ class LoginActivity : AppCompatActivity() {
         }
 
         agentClient.get_instance().login(
-            LoginRequest(user = et_username.text.toString().trim(),
+            LoginRequest(account = et_username.text.toString().trim(),
                 password = et_password.text.toString().trim()
             )
         )

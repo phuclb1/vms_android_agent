@@ -55,9 +55,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
 
     et_url.setText(rtmpUrl)
 
+    isUsbOpen = false
     rtmpUSB = RtmpUSB(openglview, this)
     usbMonitor = USBMonitor(this, onDeviceConnectListener)
-    isUsbOpen = false
     usbMonitor.register()
     rtmpUSB.setNumRetriesConnect(1000)
 
@@ -133,21 +133,24 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
         return
       }
       val camera = UVCCamera()
-      Log.d(TAG, ctrlBlock.toString())
+      logService.appendLog("onDeviceConectListener ---- ${ctrlBlock.toString()}", TAG)
       camera.open(ctrlBlock)
       try {
         camera.setPreviewSize(width, height, UVCCamera.FRAME_FORMAT_MJPEG)
       } catch (e: IllegalArgumentException) {
+        logService.appendLog("onDeviceConectListener --- setPreviewSize camera ---- ${e.toString()}", TAG)
         camera.destroy()
         try {
           camera.setPreviewSize(width, height, UVCCamera.DEFAULT_PREVIEW_MODE)
         } catch (e1: IllegalArgumentException) {
+          logService.appendLog("onDeviceConectListener --- setPreviewSize camera ---- ${e1.toString()}", TAG)
           return
         }
       }
       uvcCamera = camera
       rtmpUSB.startPreview(uvcCamera, width, height)
       isUsbOpen = true
+      logService.appendLog("onDeviceConectListener --- success ", TAG)
     }
 
     override fun onDisconnect(device: UsbDevice?, ctrlBlock: USBMonitor.UsbControlBlock?) {

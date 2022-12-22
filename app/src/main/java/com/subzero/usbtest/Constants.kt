@@ -9,12 +9,11 @@ import java.io.File
 object Constants {
     const val ENABLE_SAVE_LOG = true
     // API
-    const val BASE_URL = "http://103.160.75.240:30084/api/v1/"
+    const val BASE_URL = "http://103.160.84.179:30084/api/v1/"
     const val API_LOGIN_URL = "auth/sign-in"
     const val API_UPLOAD_VIDEO = "video/upload?"
 
-    //    const val DEFAULT_RTMP_URL = "rtmp://113.161.183.245:1935/BPC_CAMJP01_abc123?user=admin&pass=Ab2C67e2021"
-    const val RTMP_URL_HEADER = "rtmp://103.160.75.240/live/"
+    const val RTMP_URL_HEADER = "rtmp://103.160.84.179/live/"
 
     val RECORD_FOLDER = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).absolutePath + File.separator + "UsbStream")
 
