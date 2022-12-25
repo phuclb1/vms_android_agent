@@ -15,6 +15,7 @@ interface RtcManager {
 
     fun startCall()
     fun startAnswer()
+    fun endCall()
     fun switchAudioMute()
     fun switchAudioMode()
     fun getIsCall(): Boolean

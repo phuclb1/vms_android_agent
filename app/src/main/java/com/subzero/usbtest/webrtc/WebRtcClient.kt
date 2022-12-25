@@ -29,7 +29,6 @@ class WebRtcClient private constructor() {
     private var defaultMute = false
 
     private var fromCalling = ""
-    private var payloadCalling : JSONObject? = null
 
     companion object {
         val instance by lazy(LazyThreadSafetyMode.SYNCHRONIZED) { WebRtcClient() }
@@ -76,6 +75,7 @@ class WebRtcClient private constructor() {
                     }
                 }
                 isCall = false
+                mPeerConnection?.close()
             }
             Log.e(TAG, "onIceConnectionChange-->$state")
         }
@@ -169,18 +169,16 @@ class WebRtcClient private constructor() {
                     var payload: JSONObject? = null
                     if (type != "init") {
                         payload = data.getJSONObject("payload")
-                        payloadCalling = payload
                     }
 
                     fromCalling = from
-//                    startAnswer()
                     if (!peers.containsKey(from)) {
-                        val pc = createPeerConnect()
-                        pc.addStream(localMS)
-                        val peer = RealPeer(from, pc)
+                        mPeerConnection = createPeerConnect()
+                        mPeerConnection!!.addStream(localMS)
+                        val peer = RealPeer(from, mPeerConnection!!)
                         peers[from] = peer
                     }
-//                    if(type != "init")
+                    if(type != "init")
                         commandMap[type]?.execute(from, payload)
                 } catch (e: JSONException) {
                     e.printStackTrace()
@@ -238,10 +236,11 @@ class WebRtcClient private constructor() {
             return
         }
         if (serviceGenerateId && !getIsCall()) {
+//            uuid = "HD5hTbV10oLNpD5BAAAG"
+            Log.d(TAG, "call to ---> $uuid")
             SocketManager.instance.sendMessage(uuid, "init", null)
         }
     }
-
 
     fun startAnswer(){
         if (peers.containsKey(fromCalling))
@@ -252,7 +251,7 @@ class WebRtcClient private constructor() {
         }
     }
 
-    fun closeCall(){
+    fun endCall(){
         if (peers.containsKey(fromCalling)){
             peers.keys.forEach {
                 if (!it.equals(uuid)) {

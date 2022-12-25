@@ -27,6 +27,10 @@ companion object{
         WebRtcClient.instance.startAnswer()
     }
 
+    override fun endCall() {
+        WebRtcClient.instance.endCall()
+    }
+
     override fun switchAudioMute() {
         WebRtcClient.instance.switchAudioMute()
     }

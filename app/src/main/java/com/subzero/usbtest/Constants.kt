@@ -15,6 +15,8 @@ object Constants {
 
     const val RTMP_URL_HEADER = "rtmp://103.160.84.179/live/"
 
+    const val WEBRTC_SOCKET_SERVER = "http://192.168.100.3:5002"
+
     val RECORD_FOLDER = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).absolutePath + File.separator + "UsbStream")
 
     @SuppressLint("HardwareIds")

@@ -14,6 +14,7 @@ import com.serenegiant.usb.USBMonitor
 import com.serenegiant.usb.UVCCamera
 import com.subzero.usbtest.api.AgentClient
 import com.subzero.usbtest.streamlib.RtmpUSB
+import com.subzero.usbtest.webrtc.RtcSdkManager
 import kotlinx.android.synthetic.main.activity_main.*
 import net.ossrs.rtmp.ConnectCheckerRtmp
 import okhttp3.*
@@ -24,19 +25,26 @@ import java.io.File
 import java.io.IOException
 
 class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
+  private val rtcManager by lazy { RtcSdkManager.instance }
   private val agentClient = AgentClient()
+
   private lateinit var sessionManager: SessionManager
   private lateinit var usbMonitor: USBMonitor
   private lateinit var rtmpUSB: RtmpUSB
+
   private var uvcCamera: UVCCamera? = null
   private var isUsbOpen = false
+
   private val width = 1280
   private val height = 720
   private val fps = 15
-  private var token: String = ""
   private val folderRecord = Constants.RECORD_FOLDER
+
+  private var token: String = ""
   private var flagRecording = false
   private var fileRecording: String = ""
+  private var isCalling = false
+
   private val logService = LogService.getInstance()
 
   override fun onCreate(savedInstanceState: Bundle?) {
@@ -60,6 +68,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
     usbMonitor.register()
     rtmpUSB.setNumRetriesConnect(1000)
 
+    rtcManager.init(this)
+    rtcManager.connect(Constants.WEBRTC_SOCKET_SERVER)
+
     if (!folderRecord.exists()){
       folderRecord.mkdirs()
     }
@@ -76,24 +87,15 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
       }
     }
 
-//    btn_record.setOnClickListener{
-//      if(rtmpUSB.isRecording){
-//        callStopRecord()
-//        Toast.makeText(this, "Stop record", Toast.LENGTH_SHORT).show()
-//      }else{
-//        val currentTimestamp = System.currentTimeMillis()
-//        val fileRecord = "$folderRecord/$currentTimestamp.mp4"
-//        val record = callStartRecord(fileRecord)
-//        if(record){
-//          fileRecording = fileRecord
-//          Toast.makeText(this, "Start record", Toast.LENGTH_SHORT).show()
-//        }
-//      }
-//    }
-//    btn_upload.setOnClickListener{
-//      val file = File("/storage/emulated/0/DCIM/UsbStream/1670603380890.mp4")
-//      uploadVideo(file)
-//    }
+    btn_answer.setOnClickListener {
+      if(isCalling){
+        // End call
+        onEndCall()
+      }else{
+        // Answer call
+        onAnswerCall()
+      }
+    }
 
     updateUIStream()
     updateRecordStatus()
@@ -108,6 +110,28 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
       uvcCamera?.close()
     }
     usbMonitor.unregister()
+    rtcManager.onDestroy()
+  }
+
+  override fun onResume() {
+    super.onResume()
+    rtcManager.onResume()
+  }
+
+  override fun onPause() {
+    super.onPause()
+    rtcManager.onPause()
+  }
+
+  /**
+   * Calling phone
+   */
+  private fun onAnswerCall(){
+    rtcManager.startAnswer()
+  }
+
+  private fun onEndCall(){
+    rtcManager.endCall()
   }
 
   /**
@@ -194,7 +218,6 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
     updateRecordStatus()
     runOnUiThread {
       Toast.makeText(this, "Rtmp connection success", Toast.LENGTH_SHORT).show()
-      // TODO: upload recorded file
     }
   }
 
@@ -355,10 +378,6 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
     })
   }
 
-  companion object{
-    const val TAG = "Main"
-  }
-
   override fun surfaceCreated(p0: SurfaceHolder) {
   }
 
@@ -366,5 +385,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
   }
 
   override fun surfaceDestroyed(p0: SurfaceHolder) {
+  }
+
+  companion object{
+    const val TAG = "Main"
   }
 }
