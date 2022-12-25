@@ -46,7 +46,6 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
     sessionManager = SessionManager(this)
     token = sessionManager.fetchAuthToken().toString()
     val rtmpUrl = Constants.RTMP_URL_HEADER + token
-//    val rtmpUrl = "${Constants.RTMP_URL_HEADER}livestream"
     logService.appendLog("RTMP url: $rtmpUrl", TAG)
 
     if (!hasPermissions()) {
@@ -237,17 +236,6 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
     }
   }
 
-
-  /**
-   * Surface
-   */
-  override fun surfaceChanged(p0: SurfaceHolder?, p1: Int, p2: Int, p3: Int) {}
-
-  override fun surfaceDestroyed(p0: SurfaceHolder?) {}
-
-  override fun surfaceCreated(p0: SurfaceHolder?) {}
-
-
   private fun hasPermissions(): Boolean {
     for (permission in Constants.CAMERA_REQUIRED_PERMISSIONS) {
       if (PackageManager.PERMISSION_GRANTED != ActivityCompat.checkSelfPermission(this, permission)) {
@@ -369,5 +357,14 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
 
   companion object{
     const val TAG = "Main"
+  }
+
+  override fun surfaceCreated(p0: SurfaceHolder) {
+  }
+
+  override fun surfaceChanged(p0: SurfaceHolder, p1: Int, p2: Int, p3: Int) {
+  }
+
+  override fun surfaceDestroyed(p0: SurfaceHolder) {
   }
 }
