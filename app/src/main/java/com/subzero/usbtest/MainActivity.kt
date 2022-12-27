@@ -1,10 +1,11 @@
 package com.subzero.usbtest
 
+import com.subzero.usbtest.rtc.RtcSdkManager
 import android.app.Activity
 import android.content.pm.PackageManager
 import android.hardware.usb.UsbDevice
-import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
 import android.support.v4.app.ActivityCompat
 import android.util.Log
 import android.view.SurfaceHolder
@@ -14,13 +15,10 @@ import com.serenegiant.usb.USBMonitor
 import com.serenegiant.usb.UVCCamera
 import com.subzero.usbtest.api.AgentClient
 import com.subzero.usbtest.streamlib.RtmpUSB
-import com.subzero.usbtest.webrtc.RtcSdkManager
+import com.subzero.usbtest.utils.CustomizedExceptionHandler
 import kotlinx.android.synthetic.main.activity_main.*
 import net.ossrs.rtmp.ConnectCheckerRtmp
 import okhttp3.*
-import org.json.JSONArray
-import org.json.JSONException
-import org.json.JSONObject
 import java.io.File
 import java.io.IOException
 
@@ -50,6 +48,11 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_main)
+
+    var log_dir = Environment.DIRECTORY_DCIM
+    Thread.setDefaultUncaughtExceptionHandler(CustomizedExceptionHandler(
+      log_dir
+    ))
 
     sessionManager = SessionManager(this)
     token = sessionManager.fetchAuthToken().toString()
@@ -87,15 +90,15 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
       }
     }
 
-    btn_answer.setOnClickListener {
-      if(isCalling){
-        // End call
-        onEndCall()
-      }else{
-        // Answer call
-        onAnswerCall()
-      }
-    }
+//    btn_answer.setOnClickListener {
+//      if(isCalling){
+//        // End call
+//        onEndCall()
+//      }else{
+//        // Answer call
+//        onAnswerCall()
+//      }
+//    }
 
     updateUIStream()
     updateRecordStatus()
@@ -127,11 +130,11 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
    * Calling phone
    */
   private fun onAnswerCall(){
-    rtcManager.startAnswer()
+//    rtcManager.startAnswer()
   }
 
   private fun onEndCall(){
-    rtcManager.endCall()
+//    rtcManager.endCall()
   }
 
   /**

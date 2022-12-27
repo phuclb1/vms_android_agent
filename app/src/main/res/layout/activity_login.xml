@@ -7,6 +7,18 @@
     android:background="@drawable/login_background"
     tools:context=".LoginActivity">
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <ImageView
+            android:id="@+id/imageView3"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:srcCompat="@drawable/logo_viettel" />
+    </LinearLayout>
+
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -22,7 +34,7 @@
                 android:layout_height="wrap_content"
                 android:ems="20"
                 android:inputType="textPersonName"
-                android:text="Đăng nhập"
+                android:text="@string/txt_login"
                 android:textColor="#000000"
                 android:textSize="34sp"
                 android:textStyle="bold" />
@@ -93,20 +105,5 @@
 
         </LinearLayout>
     </ScrollView>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
-
-        <ImageView
-            android:id="@+id/imageView3"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            app:srcCompat="@drawable/logo_viettel" />
-
-
-    </LinearLayout>
-
 
 </RelativeLayout>

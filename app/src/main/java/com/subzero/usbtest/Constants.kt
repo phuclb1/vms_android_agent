@@ -1,7 +1,6 @@
 package com.subzero.usbtest
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.os.Build
 import android.os.Environment
 import java.io.File
@@ -9,18 +8,18 @@ import java.io.File
 object Constants {
     const val ENABLE_SAVE_LOG = true
     // API
-    const val BASE_URL = "http://103.160.84.179:30084/api/v1/"
+    const val BASE_URL = "http://103.174.213.14:30084/api/v1/"
     const val API_LOGIN_URL = "auth/sign-in"
     const val API_UPLOAD_VIDEO = "video/upload?"
 
-    const val RTMP_URL_HEADER = "rtmp://103.160.84.179/live/"
+    const val RTMP_URL_HEADER = "rtmp://103.174.213.14:21935/live/"
 
-    const val WEBRTC_SOCKET_SERVER = "http://192.168.100.3:5002"
+    const val WEBRTC_SOCKET_SERVER = "http://103.174.213.14:5001"
 
     val RECORD_FOLDER = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).absolutePath + File.separator + "UsbStream")
 
-    @SuppressLint("HardwareIds")
-    var serialNumber: String = Build.SERIAL.toString()
+//    @SuppressLint("HardwareIds")
+//    var serialNumber: String = Build.SERIAL.toString()
 
     val CAMERA_REQUIRED_PERMISSIONS =
         mutableListOf (

@@ -1,9 +1,8 @@
 package com.subzero.usbtest
 
 import android.content.Intent
-import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
+import android.support.v7.app.AppCompatActivity
 import android.widget.Toast
 import com.subzero.usbtest.api.AgentClient
 import com.subzero.usbtest.models.LoginRequest
@@ -25,7 +24,7 @@ class LoginActivity : AppCompatActivity() {
         agentClient.get_instance()
         sessionManager = SessionManager(this)
 
-        et_username.setText("agent1")
+        et_username.setText("vsmart")
         et_password?.setText("123456aA@")
 
         bt_login.setOnClickListener {
