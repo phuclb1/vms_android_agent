@@ -11,53 +11,102 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_centerVertical="true">
+
         <LinearLayout
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical">
+            <TextView
+                android:id="@+id/editTextTextPersonName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ems="20"
+                android:inputType="textPersonName"
+                android:text="Đăng nhập"
+                android:textColor="#000000"
+                android:textSize="34sp"
+                android:textStyle="bold" />
 
+            <TextView
+                android:id="@+id/editTextTextPersonName2"
+                android:layout_width="351dp"
+                android:layout_height="wrap_content"
+                android:ems="10"
+                android:inputType="textPersonName"
+                android:text="Vui lòng nhập thông tin tài khoản của bạn"
+                android:textColor="#9F9F9F" />
             <EditText
                 android:id="@+id/et_username"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="20dp"
-                android:layout_marginEnd="20dp"
                 android:layout_marginTop="10dp"
+                android:layout_marginEnd="20dp"
                 android:background="@drawable/login_edit_background"
-                android:padding="10dp"
                 android:drawableStart="@drawable/ic_user"
-                android:hint="@string/username"
-                android:textColorHint="@color/hintColor"
-                android:textColor="@color/white"
                 android:drawablePadding="10dp"
-                />
+                android:hint="@string/username"
+                android:padding="10dp"
+                android:textColor="@color/black"
+                android:textColorHint="@color/hintColor" />
+
             <EditText
                 android:id="@+id/et_password"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="20dp"
-                android:layout_marginEnd="20dp"
                 android:layout_marginTop="10dp"
+                android:layout_marginEnd="20dp"
                 android:background="@drawable/login_edit_background"
-                android:padding="10dp"
                 android:drawableStart="@drawable/ic_password"
-                android:hint="@string/password"
-                android:textColorHint="@color/hintColor"
-                android:textColor="@color/white"
                 android:drawablePadding="10dp"
+                android:hint="@string/password"
                 android:inputType="textPassword"
-                />
+                android:padding="10dp"
+                android:textColor="@color/black"
+                android:textColorHint="@color/hintColor" />
+
+            <View
+                android:id="@+id/view"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
             <Button
                 android:id="@+id/bt_login"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@drawable/button_background"
-                android:text="@string/login"
                 android:layout_marginStart="20dp"
-                android:layout_marginEnd="20dp"
                 android:layout_marginTop="10dp"
-                />
+                android:layout_marginEnd="20dp"
+                android:background="@drawable/button_background"
+                android:text="@string/login" />
+
+            <TextView
+                android:id="@+id/editTextTextPersonName3"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ems="10"
+                android:inputType="textPersonName"
+                android:text="Quên mật khẩu?"
+                android:gravity="center"
+                android:textColor="#2196F3" />
 
         </LinearLayout>
     </ScrollView>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <ImageView
+            android:id="@+id/imageView3"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:srcCompat="@drawable/logo_viettel" />
+
+
+    </LinearLayout>
+
+
 </RelativeLayout>
