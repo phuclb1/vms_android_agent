@@ -22,6 +22,7 @@
 
         <EditText
             android:id="@+id/et_url"
+            android:visibility="invisible"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_centerHorizontal="true"
@@ -37,35 +38,35 @@
 
         <Button
             android:id="@+id/start_stop"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_centerHorizontal="true"
-            android:layout_marginTop="5dp"
-            android:layout_marginBottom="10dp"
+            android:layout_marginStart="60dp"
+            android:layout_marginEnd="60dp"
             android:background="@drawable/button_background"
-            android:padding="1dp"
-            android:text="@string/start" />
+            android:text="@string/livestream" />
 
-        <Button
-            android:id="@+id/btn_answer"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerHorizontal="true"
-            android:layout_marginTop="5dp"
-            android:layout_marginBottom="10dp"
-            android:background="@drawable/button_background"
-            android:padding="1dp"
-            android:text="Answer"
-            android:visibility="visible" />
+<!--        <Button-->
+<!--            android:id="@+id/btn_answer"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_centerHorizontal="true"-->
+<!--            android:layout_marginTop="5dp"-->
+<!--            android:layout_marginBottom="10dp"-->
+<!--            android:background="@drawable/button_background"-->
+<!--            android:padding="1dp"-->
+<!--            android:text="Answer"-->
+<!--            android:visibility="gone" />-->
 
         <TextView
             android:id="@+id/tv_record"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="5dp"
             android:layout_marginBottom="10dp"
+            android:layout_marginStart="10dp"
             android:padding="1dp"
-            android:text="Record" />
+            android:text="Recording"
+            android:visibility="visible"/>
 
     </LinearLayout>
 

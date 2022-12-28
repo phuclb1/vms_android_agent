@@ -331,10 +331,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
   private fun updateUIStream(){
     if(rtmpUSB.isStreaming){
       start_stop.text = getString(R.string.stop)
-      et_url.visibility = View.INVISIBLE
+//      et_url.visibility = View.INVISIBLE
     }else{
-      start_stop.text = getString(R.string.start)
-      et_url.visibility = View.VISIBLE
+      start_stop.text = getString(R.string.livestream)
+//      et_url.visibility = View.VISIBLE
     }
   }
 

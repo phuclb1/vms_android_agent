@@ -3,6 +3,7 @@ package com.subzero.usbtest
 import android.content.Intent
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
+import android.view.View
 import android.widget.Toast
 import com.subzero.usbtest.api.AgentClient
 import com.subzero.usbtest.models.LoginRequest
@@ -26,14 +27,11 @@ class LoginActivity : AppCompatActivity() {
 
         et_username.setText("vsmart")
         et_password?.setText("123456aA@")
+        tv_error_info.visibility = View.GONE
 
         bt_login.setOnClickListener {
             bt_login.background = getDrawable(R.drawable.button_background_disabled)
             val result = onClickLogin()
-
-//            val intent = Intent(applicationContext, MainActivity::class.java)
-//            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-//            startActivity(intent)
         }
     }
 
@@ -67,7 +65,8 @@ class LoginActivity : AppCompatActivity() {
                     if(loginResponse?.authToken.isNullOrEmpty()){
                         Toast.makeText(applicationContext, "Login failure: code ${response.code()}", Toast.LENGTH_LONG).show()
                         bt_login.background = getDrawable(R.drawable.button_background)
-                        logService.appendLog(text = "Token null", tag = TAG)
+                        logService.appendLog(text = "Login failure: code ${response.code()}", tag = TAG)
+                        displayLoginErrorInfo(response.code())
                     }else{
                         val authToken = loginResponse?.authToken.toString()
                         sessionManager.saveAuthToken(authToken)
@@ -82,10 +81,33 @@ class LoginActivity : AppCompatActivity() {
                     Toast.makeText(applicationContext, "Login failure", Toast.LENGTH_LONG).show()
                     bt_login.background = getDrawable(R.drawable.button_background)
                     logService.appendLog("Login response fail", TAG)
+                    displayLoginErrorInfo(1)
                 }
             })
 
         return true
+    }
+
+    private fun displayLoginErrorInfo(code: Int){
+        runOnUiThread {
+            when(code){
+                401 -> {
+                    tv_error_info.setText(R.string.wrong_password)
+                    tv_error_info.visibility = View.VISIBLE
+                }
+                404 -> {
+                    tv_error_info.setText(R.string.wrong_username)
+                    tv_error_info.visibility = View.VISIBLE
+                }
+                1 -> {
+                    tv_error_info.setText(R.string.lost_connect_err)
+                    tv_error_info.visibility = View.VISIBLE
+                }
+                else -> {
+                    tv_error_info.visibility = View.GONE
+                }
+            }
+        }
     }
 
     companion object{

@@ -1,10 +1,13 @@
 <resources>
     <string name="app_name">USBStreamApp</string>
-    <string name="start">Livestream</string>
+    <string name="livestream">Livestream</string>
     <string name="stop">Stop</string>
     <string name="recording">Recording</string>
-    <string name="login">Login</string>
+    <string name="login">Tra cứu</string>
     <string name="username">Username</string>
     <string name="password">Password</string>
     <string name="txt_login">Đăng nhập</string>
+    <string name="wrong_username">Tài khoản không đúng</string>
+    <string name="wrong_password">Mật khẩu không đúng</string>
+    <string name="lost_connect_err">Mất kết nối</string>
 </resources>
