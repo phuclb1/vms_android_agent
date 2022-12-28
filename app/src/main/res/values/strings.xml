@@ -1,7 +1,7 @@
 <resources>
-    <string name="app_name">USBStreamApp</string>
+    <string name="app_name">VTCameraAgent</string>
     <string name="livestream">Livestream</string>
-    <string name="stop">Stop</string>
+    <string name="stop">Stop stream</string>
     <string name="recording">Recording</string>
     <string name="login">Tra cứu</string>
     <string name="username">Username</string>
@@ -10,4 +10,6 @@
     <string name="wrong_username">Tài khoản không đúng</string>
     <string name="wrong_password">Mật khẩu không đúng</string>
     <string name="lost_connect_err">Mất kết nối</string>
+    <string name="err_happen">Đã xảy ra lỗi</string>
+    <string name="no_device_err">Không tìm thấy nguồn dữ liệu</string>
 </resources>

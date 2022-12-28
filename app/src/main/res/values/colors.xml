@@ -6,6 +6,6 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="hintColor">#6C6A6D</color>
-    <color name="et_box_color">#BABABA</color>
-    <color name="error">#F80101</color>
+    <color name="et_box_color">#CACACA</color>
+    <color name="error">#CD1010</color>
 </resources>

@@ -99,7 +99,7 @@
                     tools:ignore="RtlSymmetry" />
                 <TextView
                     android:id="@+id/tv_error_info"
-                    android:visibility="gone"
+                    android:visibility="visible"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="21dp"
@@ -110,7 +110,7 @@
                     android:drawablePadding="3dp"
                     android:text="Thông báo lỗi"
                     android:textColor="@color/error"
-                    android:textSize="16sp" />
+                    android:textSize="14sp" />
 
                 <Button
                     android:id="@+id/bt_login"
@@ -119,7 +119,7 @@
                     android:layout_marginStart="20dp"
                     android:layout_marginTop="46dp"
                     android:layout_marginEnd="20dp"
-                    android:background="@drawable/button_background"
+                    android:background="@drawable/custom_button"
                     android:text="@string/login" />
 
                 <TextView

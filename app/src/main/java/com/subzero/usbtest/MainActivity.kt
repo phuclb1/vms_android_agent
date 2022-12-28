@@ -2,6 +2,7 @@ package com.subzero.usbtest
 
 import com.subzero.usbtest.rtc.RtcSdkManager
 import android.app.Activity
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.hardware.usb.UsbDevice
 import android.os.Bundle
@@ -18,6 +19,7 @@ import com.subzero.usbtest.streamlib.RtmpUSB
 import com.subzero.usbtest.utils.CustomizedExceptionHandler
 import kotlinx.android.synthetic.main.activity_main.*
 import net.ossrs.rtmp.ConnectCheckerRtmp
+//import com.pedro.rtmp.utils.ConnectCheckerRtmp
 import okhttp3.*
 import java.io.File
 import java.io.IOException
@@ -38,6 +40,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
   private val fps = 15
   private val folderRecord = Constants.RECORD_FOLDER
 
+  private var isRotated = false
+  private var isFlipped = false
+
   private var token: String = ""
   private var flagRecording = false
   private var fileRecording: String = ""
@@ -49,10 +54,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_main)
 
-    var log_dir = Environment.DIRECTORY_DCIM
-    Thread.setDefaultUncaughtExceptionHandler(CustomizedExceptionHandler(
-      log_dir
-    ))
+    /* Handle uncaught exception */
+    val logDir = Environment.DIRECTORY_DCIM
+    Thread.setDefaultUncaughtExceptionHandler(CustomizedExceptionHandler(logDir))
 
     sessionManager = SessionManager(this)
     token = sessionManager.fetchAuthToken().toString()
@@ -64,6 +68,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
     }
 
     et_url.setText(rtmpUrl)
+    layout_no_camera_found.visibility = View.VISIBLE
 
     isUsbOpen = false
     rtmpUSB = RtmpUSB(openglview, this)
@@ -89,6 +94,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
         }
       }
     }
+
+    rotate_btn.setOnClickListener{ onRotateClick() }
+    flip_btn.setOnClickListener{ onFlipClick() }
+
 
 //    btn_answer.setOnClickListener {
 //      if(isCalling){
@@ -126,6 +135,26 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
     rtcManager.onPause()
   }
 
+  private fun onRotateClick(){
+    isRotated = if(!isRotated){
+      rtmpUSB.glInterface.setRotation(90)
+      true
+    }else{
+      rtmpUSB.glInterface.setRotation(0)
+      false
+    }
+  }
+
+  private fun onFlipClick(){
+    isFlipped = if(!isFlipped){
+      flipCamera(true, false)
+      true
+    }else{
+      flipCamera(false, false)
+      false
+    }
+  }
+
   /**
    * Calling phone
    */
@@ -144,6 +173,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
     override fun onAttach(device: UsbDevice?) {
       logService.appendLog("onDeviceConnectListener ---- onAttach", TAG)
       if (device != null) {
+        layout_no_camera_found.visibility = View.INVISIBLE
         usbMonitor.requestPermission(device)
       }
     }
@@ -156,6 +186,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
         logService.appendLog("onDeviceConnectListener ---- ${device.deviceName}", TAG)
       }else{
         logService.appendLog("onDeviceConectListener ---- device null", TAG)
+        layout_no_camera_found.visibility = View.VISIBLE
         return
       }
       val camera = UVCCamera()
@@ -175,12 +206,15 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
       }
       uvcCamera = camera
       rtmpUSB.startPreview(uvcCamera, width, height)
+
       isUsbOpen = true
       logService.appendLog("onDeviceConectListener --- success ", TAG)
+      layout_no_camera_found.visibility = View.INVISIBLE
     }
 
     override fun onDisconnect(device: UsbDevice?, ctrlBlock: USBMonitor.UsbControlBlock?) {
       logService.appendLog("MainActivity onDisconnect", TAG)
+      layout_no_camera_found.visibility = View.VISIBLE
       if (uvcCamera != null) {
         updateUIStream()
         callStopStream()
@@ -251,6 +285,13 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
         Toast.makeText(this, "Rtmp connection failed! $reason", Toast.LENGTH_SHORT).show()
       }
     }
+  }
+
+  override fun onBackPressed() {
+    super.onBackPressed()
+    val intent = Intent(applicationContext, LoginActivity::class.java)
+    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+    startActivity(intent)
   }
 
   override fun onDisconnectRtmp() {
@@ -379,6 +420,18 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
       }
 
     })
+  }
+
+  private fun onStreamMute(){
+    if(rtmpUSB.isAudioMuted){
+      rtmpUSB.enableAudio()
+    }else{
+      rtmpUSB.disableAudio()
+    }
+  }
+
+  private fun flipCamera(isHorizonFlip: Boolean, isVerticalFlip: Boolean){
+    openglview.setCameraFlip(isHorizonFlip, isVerticalFlip)
   }
 
   override fun surfaceCreated(p0: SurfaceHolder) {

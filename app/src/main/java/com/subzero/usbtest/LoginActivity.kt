@@ -30,22 +30,27 @@ class LoginActivity : AppCompatActivity() {
         tv_error_info.visibility = View.GONE
 
         bt_login.setOnClickListener {
-            bt_login.background = getDrawable(R.drawable.button_background_disabled)
+//            bt_login.background = getDrawable(R.drawable.button_background_disabled)
             val result = onClickLogin()
         }
     }
 
+    override fun onBackPressed() {
+        super.onBackPressed()
+        finishAndRemoveTask()
+    }
+
     private fun onClickLogin():Boolean{
         if(et_username.text.isNullOrBlank()){
-            Toast.makeText(this, "Please enter username!", Toast.LENGTH_SHORT).show()
+            displayLoginErrorInfo(404)
             et_username.requestFocus()
-            bt_login.background = getDrawable(R.drawable.button_background)
+//            bt_login.background = getDrawable(R.drawable.custom_button)
             return true
         }
         if(et_password.text.isNullOrBlank()){
-            Toast.makeText(this, "Please enter password!", Toast.LENGTH_SHORT).show()
+            displayLoginErrorInfo(401)
             et_password.requestFocus()
-            bt_login.background = getDrawable(R.drawable.button_background)
+//            bt_login.background = getDrawable(R.drawable.custom_button)
             return true
         }
 
@@ -63,8 +68,8 @@ class LoginActivity : AppCompatActivity() {
                     val loginResponse = response.body()
                     logService.appendLog(text = loginResponse?.authToken.toString(), tag = TAG)
                     if(loginResponse?.authToken.isNullOrEmpty()){
-                        Toast.makeText(applicationContext, "Login failure: code ${response.code()}", Toast.LENGTH_LONG).show()
-                        bt_login.background = getDrawable(R.drawable.button_background)
+//                        Toast.makeText(applicationContext, "Login failure: code ${response.code()}", Toast.LENGTH_LONG).show()
+//                        bt_login.background = getDrawable(R.drawable.custom_button)
                         logService.appendLog(text = "Login failure: code ${response.code()}", tag = TAG)
                         displayLoginErrorInfo(response.code())
                     }else{
@@ -79,7 +84,7 @@ class LoginActivity : AppCompatActivity() {
 
                 override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
                     Toast.makeText(applicationContext, "Login failure", Toast.LENGTH_LONG).show()
-                    bt_login.background = getDrawable(R.drawable.button_background)
+//                    bt_login.background = getDrawable(R.drawable.custom_button)
                     logService.appendLog("Login response fail", TAG)
                     displayLoginErrorInfo(1)
                 }
@@ -104,7 +109,8 @@ class LoginActivity : AppCompatActivity() {
                     tv_error_info.visibility = View.VISIBLE
                 }
                 else -> {
-                    tv_error_info.visibility = View.GONE
+                    tv_error_info.setText(R.string.err_happen)
+                    tv_error_info.visibility = View.VISIBLE
                 }
             }
         }

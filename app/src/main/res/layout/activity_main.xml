@@ -3,15 +3,67 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/login_background"
+    android:background="@drawable/login_edit_background"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".MainActivity">
 
     <com.pedro.rtplibrary.view.OpenGlView
-        app:keepAspectRatio="true"
+        app:keepAspectRatio="false"
         android:id="@+id/openglview"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/rotate_btn"
+            android:layout_width="38dp"
+            android:layout_height="38dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginStart="10dp"
+            android:background="@drawable/rotate_image"
+            />
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+        <Button
+            android:id="@+id/flip_btn"
+            android:layout_width="38dp"
+            android:layout_height="38dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginEnd="10dp"
+            android:background="@drawable/flip_image"
+            />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/layout_no_camera_found"
+        android:visibility="invisible"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_centerHorizontal="true"
+        android:gravity="center_vertical"
+        android:orientation="vertical">
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/ic_baseline_warning_24"
+            android:layout_gravity="center"
+            />
+        <TextView
+            android:visibility="visible"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:gravity="center_horizontal"
+            android:text="@string/no_device_err"
+            />
+    </LinearLayout>
+
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -42,7 +94,8 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="60dp"
             android:layout_marginEnd="60dp"
-            android:background="@drawable/button_background"
+            android:layout_marginBottom="20dp"
+            android:background="@drawable/custom_button"
             android:text="@string/livestream" />
 
 <!--        <Button-->
@@ -66,7 +119,7 @@
             android:layout_marginStart="10dp"
             android:padding="1dp"
             android:text="Recording"
-            android:visibility="visible"/>
+            android:visibility="gone"/>
 
     </LinearLayout>
 
