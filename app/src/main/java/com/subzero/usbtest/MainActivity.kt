@@ -371,10 +371,12 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
    */
   private fun updateUIStream(){
     if(rtmpUSB.isStreaming){
+      start_stop.background = getDrawable(R.drawable.custom_oval_button_2)
       start_stop.text = getString(R.string.stop)
 //      et_url.visibility = View.INVISIBLE
     }else{
-      start_stop.text = getString(R.string.livestream)
+      start_stop.background = getDrawable(R.drawable.custom_oval_button_1)
+      start_stop.text = getString(R.string.start)
 //      et_url.visibility = View.VISIBLE
     }
   }

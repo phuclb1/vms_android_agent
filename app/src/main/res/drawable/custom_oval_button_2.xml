@@ -3,9 +3,9 @@
     <item android:state_pressed="true" >
         <shape android:shape="oval">
             <solid
-                android:color="@color/hintColor" />
+                android:color="#515151" />
             <stroke
-                android:width="60dp"
+                android:width="3dp"
                 android:color="@color/white" />
             <corners
                 android:radius="0dp" />
@@ -15,9 +15,9 @@
     <item>
         <shape android:shape="oval">
             <solid
-                android:color="#CD1010" />
+                android:color="#948E8E" />
             <stroke
-                android:width="60dp"
+                android:width="3dp"
                 android:color="@color/white" />
             <corners
                 android:radius="0dp" />

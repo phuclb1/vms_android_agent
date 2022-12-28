@@ -1,7 +1,8 @@
 <resources>
     <string name="app_name">VTCameraAgent</string>
     <string name="livestream">Livestream</string>
-    <string name="stop">Stop stream</string>
+    <string name="start">Start</string>
+    <string name="stop">Stop</string>
     <string name="recording">Recording</string>
     <string name="login">Tra cứu</string>
     <string name="username">Username</string>
