@@ -25,7 +25,7 @@ import java.io.File
 import java.io.IOException
 
 class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
-  private val rtcManager by lazy { RtcSdkManager.instance }
+//  private val rtcManager by lazy { RtcSdkManager.instance }
   private val agentClient = AgentClient()
 
   private lateinit var sessionManager: SessionManager
@@ -76,8 +76,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
     usbMonitor.register()
     rtmpUSB.setNumRetriesConnect(1000)
 
-    rtcManager.init(this)
-    rtcManager.connect(Constants.WEBRTC_SOCKET_SERVER)
+//    rtcManager.init(this)
+//    rtcManager.connect(Constants.WEBRTC_SOCKET_SERVER)
 
     if (!folderRecord.exists()){
       folderRecord.mkdirs()
@@ -122,17 +122,17 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
       uvcCamera?.close()
     }
     usbMonitor.unregister()
-    rtcManager.onDestroy()
+//    rtcManager.onDestroy()
   }
 
   override fun onResume() {
     super.onResume()
-    rtcManager.onResume()
+//    rtcManager.onResume()
   }
 
   override fun onPause() {
     super.onPause()
-    rtcManager.onPause()
+//    rtcManager.onPause()
   }
 
   private fun onRotateClick(){
@@ -276,15 +276,18 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
 
     val reconnect = rtmpUSB.reconnectRtp(reason, 1000)
     if (!reconnect){
-      callStopStream()
+      rtmpUSB.setNumRetriesConnect(1000)
     }
-
-    updateRecordStatus()
-    runOnUiThread {
-      if (!reconnect){
-        Toast.makeText(this, "Rtmp connection failed! $reason", Toast.LENGTH_SHORT).show()
-      }
-    }
+//    if (!reconnect){
+//      callStopStream()
+//    }
+//
+//    updateRecordStatus()
+//    runOnUiThread {
+//      if (!reconnect){
+//        Toast.makeText(this, "Rtmp connection failed! $reason", Toast.LENGTH_SHORT).show()
+//      }
+//    }
   }
 
   override fun onBackPressed() {
@@ -416,6 +419,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
       override fun onResponse(call: Call, response: Response) {
         val responseData = response.body().toString()
         logService.appendLog("upload video success: $responseData", TAG)
+        if(file.exists()){
+          file.delete()
+        }
         runOnUiThread {
           Toast.makeText(this@MainActivity, "Upload success $responseData", Toast.LENGTH_SHORT).show()
         }
