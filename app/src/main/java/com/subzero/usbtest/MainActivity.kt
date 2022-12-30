@@ -3,7 +3,9 @@ package com.subzero.usbtest
 import com.subzero.usbtest.rtc.RtcSdkManager
 import android.app.Activity
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
+import android.graphics.drawable.GradientDrawable.Orientation
 import android.hardware.usb.UsbDevice
 import android.os.Bundle
 import android.os.Environment
@@ -11,6 +13,7 @@ import android.support.v4.app.ActivityCompat
 import android.util.Log
 import android.view.SurfaceHolder
 import android.view.View
+import android.view.WindowManager
 import android.widget.Toast
 import com.serenegiant.usb.USBMonitor
 import com.serenegiant.usb.UVCCamera
@@ -53,6 +56,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_main)
+    window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
     /* Handle uncaught exception */
     val logDir = Environment.DIRECTORY_DCIM
@@ -136,13 +140,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
   }
 
   private fun onRotateClick(){
-    isRotated = if(!isRotated){
-      rtmpUSB.glInterface.setRotation(90)
-      true
-    }else{
-      rtmpUSB.glInterface.setRotation(0)
-      false
-    }
+//    requestedOrientation = if(resources.configuration.orientation == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+//      ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+//    else
+//      ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
   }
 
   private fun onFlipClick(){
