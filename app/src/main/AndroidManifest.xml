@@ -43,7 +43,7 @@
                 android:resource="@xml/device_filterall" />
         </activity>
         <activity android:name=".MainActivity"
-            android:screenOrientation="landscape"
+            android:screenOrientation="portrait"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />

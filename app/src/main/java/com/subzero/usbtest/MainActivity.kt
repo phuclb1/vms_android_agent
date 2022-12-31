@@ -13,6 +13,8 @@ import android.support.v4.app.ActivityCompat
 import android.util.Log
 import android.view.SurfaceHolder
 import android.view.View
+import android.view.View.INVISIBLE
+import android.view.View.OnClickListener
 import android.view.WindowManager
 import android.widget.Toast
 import com.serenegiant.usb.USBMonitor
@@ -87,18 +89,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
       folderRecord.mkdirs()
     }
 
-    start_stop.setOnClickListener {
-      if (uvcCamera != null) {
-        if (!rtmpUSB.isStreaming) {
-          callStartStream(et_url.text.toString())
-          updateUIStream()
-        } else {
-          callStopStream()
-          updateUIStream()
-        }
-      }
-    }
-
+    start_stop.setOnClickListener { onButtonStreamClick() }
     rotate_btn.setOnClickListener{ onRotateClick() }
     flip_btn.setOnClickListener{ onFlipClick() }
 
@@ -140,10 +131,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
   }
 
   private fun onRotateClick(){
-//    requestedOrientation = if(resources.configuration.orientation == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
-//      ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-//    else
-//      ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+    requestedOrientation = if(resources.configuration.orientation == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+      ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+    else
+      ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
   }
 
   private fun onFlipClick(){
@@ -153,6 +144,17 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
     }else{
       flipCamera(false, false)
       false
+    }
+  }
+
+  private fun onButtonStreamClick(){
+    if (uvcCamera != null) {
+      if (!rtmpUSB.isStreaming) {
+        callStartStream(et_url.text.toString())
+      } else {
+        callStopStream()
+      }
+      updateUIStream()
     }
   }
 
@@ -301,8 +303,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
   override fun onDisconnectRtmp() {
     logService.appendLog("disconnect rtmp", TAG)
     callStopStream()
+    updateUIStream()
     runOnUiThread {
-      updateUIStream()
       Toast.makeText(this, "Disconnect", Toast.LENGTH_SHORT).show()
     }
   }
@@ -374,14 +376,20 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
    * Update UI
    */
   private fun updateUIStream(){
-    if(rtmpUSB.isStreaming){
-      start_stop.background = getDrawable(R.drawable.custom_oval_button_2)
-      start_stop.text = getString(R.string.stop)
+    runOnUiThread {
+      if (rtmpUSB.isStreaming) {
+        start_stop.background = getDrawable(R.drawable.custom_oval_button_2)
+        start_stop.text = getString(R.string.stop)
+        rotate_btn.visibility = View.INVISIBLE
+        flip_btn.visibility = View.INVISIBLE
 //      et_url.visibility = View.INVISIBLE
-    }else{
-      start_stop.background = getDrawable(R.drawable.custom_oval_button_1)
-      start_stop.text = getString(R.string.start)
+      } else {
+        start_stop.background = getDrawable(R.drawable.custom_oval_button_1)
+        start_stop.text = getString(R.string.start)
+        rotate_btn.visibility = View.VISIBLE
+        flip_btn.visibility = View.VISIBLE
 //      et_url.visibility = View.VISIBLE
+      }
     }
   }
 
