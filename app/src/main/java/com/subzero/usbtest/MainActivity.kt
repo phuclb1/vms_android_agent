@@ -1,14 +1,13 @@
 package com.subzero.usbtest
 
-import com.subzero.usbtest.rtc.RtcSdkManager
+//import com.pedro.rtmp.utils.ConnectCheckerRtmp
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
-import android.graphics.drawable.GradientDrawable.Orientation
 import android.hardware.usb.UsbDevice
-import android.os.Bundle
-import android.os.Environment
+import android.os.*
 import android.support.v4.app.ActivityCompat
 import android.util.Log
 import android.view.SurfaceHolder
@@ -18,17 +17,13 @@ import android.widget.Toast
 import com.serenegiant.usb.USBMonitor
 import com.serenegiant.usb.UVCCamera
 import com.subzero.usbtest.api.AgentClient
-import com.subzero.usbtest.rtc.SocketManager
 import com.subzero.usbtest.rtc.WebRtcClient
 import com.subzero.usbtest.streamlib.RtmpUSB
 import com.subzero.usbtest.utils.CustomizedExceptionHandler
 import kotlinx.android.synthetic.main.activity_main.*
 import net.ossrs.rtmp.ConnectCheckerRtmp
-//import com.pedro.rtmp.utils.ConnectCheckerRtmp
 import okhttp3.*
-import org.json.JSONException
-import org.json.JSONObject
-import org.webrtc.*
+import org.webrtc.PeerConnection
 import java.io.File
 import java.io.IOException
 
@@ -60,6 +55,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
 
   private val logService = LogService.getInstance()
 
+  private lateinit var vibrator: Vibrator
+
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_main)
@@ -73,6 +70,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
     token = sessionManager.fetchAuthToken().toString()
     val rtmpUrl = Constants.RTMP_URL_HEADER + token
     logService.appendLog("RTMP url: $rtmpUrl", TAG)
+
+    vibrator = this.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
 
     if (!hasPermissions()) {
       ActivityCompat.requestPermissions(this, Constants.CAMERA_REQUIRED_PERMISSIONS, 1)
@@ -133,8 +132,14 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
     }
     webRtcManager.onCallingCallback = fun(){
       Log.d(TAG, "------ callback: onCalling")
+      val pattern = longArrayOf(1500, 800, 800, 800)
       runOnUiThread {
         layout_calling.visibility = View.VISIBLE
+        if (Build.VERSION.SDK_INT >= 26) {
+          vibrator.vibrate(VibrationEffect.createWaveform(pattern, 0))
+        } else {
+          vibrator.vibrate(200)
+        }
       }
     }
   }
@@ -194,11 +199,13 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
    */
   private fun onDeclineCall(){
     webRtcManager.closeCall()
+    vibrator.cancel()
   }
 
   private fun onAcceptCall(){
     webRtcManager.startAnswer()
     end_call_btn.visibility = View.VISIBLE
+    vibrator.cancel()
   }
 
   private fun onEndCall(){
