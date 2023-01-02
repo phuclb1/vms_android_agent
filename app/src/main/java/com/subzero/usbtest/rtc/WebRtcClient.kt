@@ -1,18 +1,14 @@
 package com.subzero.usbtest.rtc
 
 import android.content.Context
+import android.media.AudioManager
 import android.text.TextUtils
 import android.util.Log
 import android.widget.Toast
 import org.json.JSONException
 import org.json.JSONObject
 import org.webrtc.*
-import org.webrtc.PeerConnection
 import java.util.*
-import org.webrtc.MediaConstraints
-import kotlin.collections.HashMap
-import org.webrtc.MediaStream
-import android.media.AudioManager
 
 
 /***
@@ -32,6 +28,8 @@ class WebRtcClient private constructor() {
 
     private var is_caller = true
 
+    private lateinit var callback: WebRtcClientCallback
+
     companion object {
         val instance by lazy(LazyThreadSafetyMode.SYNCHRONIZED) { WebRtcClient() }
     }
@@ -44,6 +42,11 @@ class WebRtcClient private constructor() {
     private var mediaConstraints: MediaConstraints? = null
     private var localMS: MediaStream? = null
     private val commandMap: HashMap<String, Command> = hashMapOf()
+    var mPayload: JSONObject? = null
+
+    var onIceConnectionChangeCallback = fun(x: PeerConnection.IceConnectionState) {}
+    var onCallingCallback = fun(){}
+
     private val mPeerConnectionObserver: PeerConnection.Observer = object : PeerConnection.Observer {
         override fun onIceCandidate(candidate: IceCandidate) {
             if(is_caller) {
@@ -85,6 +88,10 @@ class WebRtcClient private constructor() {
                 mPeerConnection?.close()
             }
             Log.e(TAG, "onIceConnectionChange-->$state")
+
+            if (state != null) {
+                onIceConnectionChangeCallback(state)
+            }
         }
 
         override fun onIceGatheringChange(p0: PeerConnection.IceGatheringState?) {
@@ -177,12 +184,11 @@ class WebRtcClient private constructor() {
                     var payload: JSONObject? = null
                     if (type != "init") {
                         payload = data.getJSONObject("payload")
+                        mPayload = payload
                     }
 
                     fromCalling = from
-//                    uuid = from
                     if (!peers.containsKey(from)) {
-//                        val pc = createPeerConnect()
                         mPeerConnection = createPeerConnect()
                         val rt_addstream = mPeerConnection!!.addStream(localMS)
                         Log.e(TAG, "rt_addstream: $rt_addstream")
@@ -192,8 +198,16 @@ class WebRtcClient private constructor() {
                         val peer = RealPeer(from, mPeerConnection!!)
                         peers[from] = peer
                     }
-//                    if(type != "init")
+                    if(type == "init"){
+                        onCallingCallback()
+                    }
+                    else if (type == "offer")
+                    {
+                        onCallingCallback()
+                    }
+                    else{
                         commandMap[type]?.execute(from, payload)
+                    }
                 } catch (e: JSONException) {
                     e.printStackTrace()
                 }
@@ -264,7 +278,7 @@ class WebRtcClient private constructor() {
     fun startAnswer(){
         if (peers.containsKey(fromCalling))
         {
-            commandMap["init"]?.execute(fromCalling, null)
+            commandMap["offer"]?.execute(fromCalling, mPayload)
         }else{
             Log.d(TAG, "====== not init cause peer contained key $fromCalling")
         }
@@ -273,7 +287,7 @@ class WebRtcClient private constructor() {
     fun closeCall(){
         if (peers.containsKey(fromCalling)){
             peers.keys.forEach {
-                if (!it.equals(uuid)) {
+                if (it != uuid) {
                     peers.remove(it)
                 }
             }
@@ -363,10 +377,6 @@ class WebRtcClient private constructor() {
         }
     }
 
-    fun getIsCall(): Boolean {
-        return isCall
-    }
-
     fun switchAudioMute() {
         defaultMute = !defaultMute
         mAudioTrack?.setEnabled(!defaultMute)
@@ -381,4 +391,30 @@ class WebRtcClient private constructor() {
         }
         println("after audio mode--->" + am.isWiredHeadsetOn + "---" + am.mode + "----" + am.isSpeakerphoneOn)
     }
+
+
+
+//    fun setPeerConnectionObserver(m: PeerConnection.Observer){
+////        mPeerConnectionObserver = m
+//    }
+//
+//    fun setIscall(value : Boolean){
+//        isCall = value
+//    }
+    fun getIsCall(): Boolean{
+        return isCall
+    }
+//
+//    fun closePeerConnection(){
+//        mPeerConnection?.close()
+//    }
+//    fun removeIceCandidates(candidates: Array<out IceCandidate>?){
+//        mPeerConnection?.removeIceCandidates(candidates)
+//    }
+//
+//    fun getFromCalling(): String{
+//        return fromCalling
+//    }
+
+//    data class mPeerConnectionObserver
 }

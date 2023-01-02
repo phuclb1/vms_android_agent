@@ -8,4 +8,5 @@
     <color name="hintColor">#6C6A6D</color>
     <color name="et_box_color">#CACACA</color>
     <color name="error">#CD1010</color>
+    <color name="grey_a">#A44C4C4C</color>
 </resources>

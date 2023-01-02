@@ -31,6 +31,18 @@
             android:layout_height="0dp"
             android:layout_weight="1" />
         <Button
+            android:id="@+id/end_call_btn"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/custom_oval_button_3"
+            android:visibility="gone"
+            />
+        <View
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+        <Button
             android:id="@+id/flip_btn"
             android:layout_width="38dp"
             android:layout_height="38dp"
@@ -63,7 +75,6 @@
             android:text="@string/no_device_err"
             />
     </LinearLayout>
-
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -119,6 +130,45 @@
             android:padding="1dp"
             android:text="Recording"
             android:visibility="gone"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/layout_calling"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_centerHorizontal="true"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:background="@color/grey_a"
+        android:visibility="gone"
+        >
+        <TextView
+            android:id="@+id/caller_info"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:gravity="center_horizontal"
+            android:text="Is calling"/>
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            >
+            <Button
+                android:id="@+id/decline_call_btn"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:background="@drawable/custom_oval_button_3"
+
+                />
+            <Button
+                android:id="@+id/accept_call_btn"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_marginLeft="30dp"
+                android:background="@drawable/custom_oval_button_4"
+                />
+        </LinearLayout>
 
     </LinearLayout>
 

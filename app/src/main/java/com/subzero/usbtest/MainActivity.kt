@@ -13,24 +13,29 @@ import android.support.v4.app.ActivityCompat
 import android.util.Log
 import android.view.SurfaceHolder
 import android.view.View
-import android.view.View.INVISIBLE
-import android.view.View.OnClickListener
 import android.view.WindowManager
 import android.widget.Toast
 import com.serenegiant.usb.USBMonitor
 import com.serenegiant.usb.UVCCamera
 import com.subzero.usbtest.api.AgentClient
+import com.subzero.usbtest.rtc.SocketManager
+import com.subzero.usbtest.rtc.WebRtcClient
 import com.subzero.usbtest.streamlib.RtmpUSB
 import com.subzero.usbtest.utils.CustomizedExceptionHandler
 import kotlinx.android.synthetic.main.activity_main.*
 import net.ossrs.rtmp.ConnectCheckerRtmp
 //import com.pedro.rtmp.utils.ConnectCheckerRtmp
 import okhttp3.*
+import org.json.JSONException
+import org.json.JSONObject
+import org.webrtc.*
 import java.io.File
 import java.io.IOException
 
 class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
 //  private val rtcManager by lazy { RtcSdkManager.instance }
+  private val webRtcManager by lazy { WebRtcClient.instance }
+
   private val agentClient = AgentClient()
 
   private lateinit var sessionManager: SessionManager
@@ -84,6 +89,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
 
 //    rtcManager.init(this)
 //    rtcManager.connect(Constants.WEBRTC_SOCKET_SERVER)
+    webRtcManager.init(this)
+    webRtcManager.connect(Constants.WEBRTC_SOCKET_SERVER)
 
     if (!folderRecord.exists()){
       folderRecord.mkdirs()
@@ -92,7 +99,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
     start_stop.setOnClickListener { onButtonStreamClick() }
     rotate_btn.setOnClickListener{ onRotateClick() }
     flip_btn.setOnClickListener{ onFlipClick() }
-
+    decline_call_btn.setOnClickListener { onDeclineCall() }
+    accept_call_btn.setOnClickListener { onAcceptCall() }
+    end_call_btn.setOnClickListener { onEndCall() }
 
 //    btn_answer.setOnClickListener {
 //      if(isCalling){
@@ -106,6 +115,28 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
 
     updateUIStream()
     updateRecordStatus()
+
+    webRtcManager.onIceConnectionChangeCallback = fun(state)
+    {
+      Log.d(TAG, "------ callback: onPeerConectionChange $state")
+      runOnUiThread {
+        if (state == PeerConnection.IceConnectionState.CONNECTED) {
+          layout_calling.visibility = View.INVISIBLE
+        }
+        if (state == PeerConnection.IceConnectionState.CLOSED){
+          layout_calling.visibility = View.GONE
+        }
+        else {
+
+        }
+      }
+    }
+    webRtcManager.onCallingCallback = fun(){
+      Log.d(TAG, "------ callback: onCalling")
+      runOnUiThread {
+        layout_calling.visibility = View.VISIBLE
+      }
+    }
   }
 
   override fun onDestroy() {
@@ -117,17 +148,17 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
       uvcCamera?.close()
     }
     usbMonitor.unregister()
-//    rtcManager.onDestroy()
+    webRtcManager.onDestroy()
   }
 
   override fun onResume() {
     super.onResume()
-//    rtcManager.onResume()
+    webRtcManager.onResume()
   }
 
   override fun onPause() {
     super.onPause()
-//    rtcManager.onPause()
+    webRtcManager.onPause()
   }
 
   private fun onRotateClick(){
@@ -161,12 +192,20 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
   /**
    * Calling phone
    */
-  private fun onAnswerCall(){
-//    rtcManager.startAnswer()
+  private fun onDeclineCall(){
+    webRtcManager.closeCall()
+  }
+
+  private fun onAcceptCall(){
+    webRtcManager.startAnswer()
+    end_call_btn.visibility = View.VISIBLE
   }
 
   private fun onEndCall(){
-//    rtcManager.endCall()
+    webRtcManager.closeCall()
+    runOnUiThread {
+      end_call_btn.visibility = View.GONE
+    }
   }
 
   /**
