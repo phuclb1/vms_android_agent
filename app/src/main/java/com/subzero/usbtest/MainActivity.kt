@@ -95,9 +95,11 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
     start_stop.setOnClickListener { onButtonStreamClick() }
     rotate_btn.setOnClickListener{ onRotateClick() }
     flip_btn.setOnClickListener{ onFlipClick() }
+
     decline_call_btn.setOnClickListener { onDeclineCall() }
     accept_call_btn.setOnClickListener { onAcceptCall() }
     end_call_btn.setOnClickListener { onEndCall() }
+
     btn_switch_audio.setOnClickListener {
       webRtcManager.switchAudioMode()
     }

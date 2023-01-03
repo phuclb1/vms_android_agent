@@ -69,18 +69,12 @@ class WebRtcClient private constructor() {
                 isCall = true
             }
             if (state == PeerConnection.IceConnectionState.DISCONNECTED) {
-                peers.keys.forEach {
-                    peers.remove(it)
-                }
-                isCall = false
-                mPeerConnection?.close()
+                closePeerConnection()
             }
             if (state == PeerConnection.IceConnectionState.CLOSED) {
-                peers.keys.forEach {
-                    peers.remove(it)
-                }
+                peers.clear()
                 isCall = false
-                mPeerConnection?.close()
+//                mPeerConnection?.dispose()
             }
             Log.e(TAG, "onIceConnectionChange-->$state")
 
@@ -204,11 +198,7 @@ class WebRtcClient private constructor() {
 
     fun onRecieveMsgLeave(){
         onCallLeaveCallback()
-        peers.keys.forEach {
-            peers.remove(it)
-        }
-        isCall = false
-        mPeerConnection?.close()
+        closePeerConnection()
     }
 
     /**
@@ -266,13 +256,15 @@ class WebRtcClient private constructor() {
 
     fun closeCall(){
         if (peers.containsKey(fromCalling)){
-            peers.keys.forEach {
-                peers.remove(it)
-            }
-            isCall = false
             SocketManager.instance.sendLeaveMessage(fromCalling, "leave")
-            mPeerConnection?.close()
+            closePeerConnection()
         }
+    }
+
+    private fun closePeerConnection(){
+        peers.clear()
+        isCall = false
+        mPeerConnection?.close()
     }
 
     private fun createPeerConnect(): PeerConnection {
