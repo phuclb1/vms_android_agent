@@ -44,7 +44,7 @@ class WebRtcClient private constructor() {
 
     var onIceConnectionChangeCallback = fun(x: PeerConnection.IceConnectionState) {}
     var onCallingCallback = fun(){}
-    var onUserJoined = fun(token: String){}
+    var onCallLeaveCallback = fun(){}
 
     private val mPeerConnectionObserver: PeerConnection.Observer = object : PeerConnection.Observer {
         override fun onIceCandidate(candidate: IceCandidate) {
@@ -78,6 +78,15 @@ class WebRtcClient private constructor() {
                 isCall = true
             }
             if (state == PeerConnection.IceConnectionState.DISCONNECTED) {
+                peers.keys.forEach {
+                    if (!it.equals(uuid)) {
+                        peers.remove(it)
+                    }
+                }
+                isCall = false
+                mPeerConnection?.close()
+            }
+            if (state == PeerConnection.IceConnectionState.CLOSED) {
                 peers.keys.forEach {
                     if (!it.equals(uuid)) {
                         peers.remove(it)
@@ -134,7 +143,7 @@ class WebRtcClient private constructor() {
     fun onResume() {
     }
 
-    fun connect(address: String) {
+    fun connect(address: String, token: String) {
         commandMap["init"] = CreateOfferCommand()
         commandMap["offer"] = CreateAnswerCommand()
         commandMap["answer"] = SetRemoteSDPCommand()
@@ -164,7 +173,6 @@ class WebRtcClient private constructor() {
                 uuid = signal
                 serviceGenerateId = true
                 Log.e(TAG, "userJoin-->$signal")
-                onUserJoined(signal)
             }
 
             override fun userLeave(signal: String) {
@@ -181,32 +189,58 @@ class WebRtcClient private constructor() {
                 try {
                     val from = data.optString("from")
                     val type = data.optString("type")
-                    var payload: JSONObject? = null
-                    if (type != "init") {
-                        payload = data.getJSONObject("payload")
-                        mPayload = payload
-                    }
 
-                    fromCalling = from
-                    if (!peers.containsKey(from)) {
-                        mPeerConnection = createPeerConnect()
-                        val rt_addstream = mPeerConnection!!.addStream(localMS)
-                        Log.e(TAG, "rt_addstream: $rt_addstream")
-                        Log.e(TAG, "mPeerConnection state ${
-                            mPeerConnection!!.signalingState().toString()
-                        }")
-                        val peer = RealPeer(from, mPeerConnection!!)
-                        peers[from] = peer
+                    if (type == "leave"){
+                        Log.e(TAG, "------> leave call")
+                        onCallLeaveCallback()
+                        peers.keys.forEach {
+                            if (!it.equals(uuid)) {
+                                peers.remove(it)
+                            }
+                        }
+                        isCall = false
+                        mPeerConnection?.close()
                     }
-                    if(type == "init"){
-                        onCallingCallback()
-                    }
-                    else if (type == "offer")
-                    {
-                        onCallingCallback()
-                    }
-                    else{
-                        commandMap[type]?.execute(from, payload)
+                    else {
+
+                        var payload: JSONObject? = null
+                        if (type != "init" && type != "leave") {
+                            payload = data.getJSONObject("payload")
+                            mPayload = payload
+                        }
+
+                        fromCalling = from
+                        if (!peers.containsKey(from)) {
+                            mPeerConnection = createPeerConnect()
+                            val rt_addstream = mPeerConnection!!.addStream(localMS)
+                            Log.e(TAG, "rt_addstream: $rt_addstream")
+                            Log.e(
+                                TAG, "mPeerConnection state ${
+                                    mPeerConnection!!.signalingState().toString()
+                                }"
+                            )
+                            val peer = RealPeer(from, mPeerConnection!!)
+                            peers[from] = peer
+                        }
+                        if (type == "init") {
+                            onCallingCallback()
+                        } else if (type == "offer") {
+                            onCallingCallback()
+                        }
+//                    else if (type == "leave"){
+//                        Log.e(TAG, "------> leave call")
+//                        peers.keys.forEach {
+//                            if (!it.equals(uuid)) {
+//                                peers.remove(it)
+//                            }
+//                        }
+//                        isCall = false
+//                        mPeerConnection?.close()
+//                        onCallLeaveCallback()
+//                    }
+                        else {
+                            commandMap[type]?.execute(from, payload)
+                        }
                     }
                 } catch (e: JSONException) {
                     e.printStackTrace()
@@ -214,7 +248,7 @@ class WebRtcClient private constructor() {
 
             }
         })
-        SocketManager.instance.connectSocket(address)
+        SocketManager.instance.connectSocket(address, token)
     }
 
     /**
@@ -292,6 +326,7 @@ class WebRtcClient private constructor() {
                 }
             }
             isCall = false
+            SocketManager.instance.sendLeaveMessage(fromCalling, "leave")
             mPeerConnection?.close()
         }
     }

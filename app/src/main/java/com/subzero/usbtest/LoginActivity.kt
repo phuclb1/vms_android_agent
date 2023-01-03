@@ -43,11 +43,11 @@ class LoginActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        webRtcManager.connect(Constants.WEBRTC_SOCKET_SERVER)
-        webRtcManager.onUserJoined = fun(token){
-            Log.d(TAG, "login screen get token user joined: $token")
-            webRtcToken = token
-        }
+//        webRtcManager.connect(Constants.WEBRTC_SOCKET_SERVER, )
+//        webRtcManager.onUserJoined = fun(token){
+//            Log.d(TAG, "login screen get token user joined: $token")
+//            webRtcToken = token
+//        }
     }
 
     override fun onBackPressed() {

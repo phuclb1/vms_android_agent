@@ -1,7 +1,10 @@
 package com.subzero.usbtest.rtc
 
+import android.util.Log
 import io.socket.client.IO
+import io.socket.client.Manager
 import io.socket.client.Socket
+import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
 
@@ -50,25 +53,51 @@ class SocketManager {
         mSocket?.emit("message", message)
     }
 
-    fun connectSocket(address: String) {
+    fun sendLeaveMessage(to: String, type: String) {
+        val message = JSONObject()
+        message.put("to", to)
+        message.put("type", type)
+        mSocket?.emit("message", message)
+    }
+
+    fun connectSocket(address: String, token: String) {
         if (mSocket == null) {
-            mSocket = IO.socket(address)
+            Log.e("SocketManager", token)
+            var options = IO.Options()
+            options.path = "/ws/socket.io"
+            options.transports = arrayOf("websocket", "polling")
+            options.query= "token=$token&foo=bar"
+
+            mSocket = IO.socket(address, options)
         }
 
         mSocket?.on(Socket.EVENT_CONNECT) {
             mOnConnectStateListener?.connectSuccess()
-        }?.on(Socket.EVENT_CONNECTING) {
-            mOnConnectStateListener?.connecting()
-        }?.on(Socket.EVENT_CONNECT_TIMEOUT) {
-            mOnConnectStateListener?.connectFailure(it[0].toString())
         }?.on(Socket.EVENT_CONNECT_ERROR) {
             mOnConnectStateListener?.connectFailure(it[0].toString())
         }?.on(Socket.EVENT_DISCONNECT) {
             mOnConnectStateListener?.disconnect()
-        }?.on(Socket.EVENT_MESSAGE) {
-            mOnRtcListener?.receiveMsg(it[0].toString())
+        }?.on("message") {
+//            for(i in it){
+//                Log.e("${it.size} Socket manager: message: ","${i}")
+//            }
+
+            var message = JSONArray(it)
+            Log.e("Socketmanager message", message[0].toString())
+            mOnRtcListener?.receiveMsg(message[0].toString())
+
+//            if(message["type"] == "id"){
+//                mOnRtcListener?.userJoin(message["payload"].toString())
+//            }
+//            else{
+//                mOnRtcListener?.receiveMsg(message.toString())
+//            }
+//            Log.e("${it.size} Socket manager: message: ","${message["type"]}")
+
+//
+//            mOnRtcListener?.receiveMsg(it[0].toString())
         }?.on("id") {
-            mOnRtcListener?.userJoin(it[0].toString())
+//            mOnRtcListener?.userJoin(content.toString())
         }?.on("leave"){
             mOnRtcListener?.userLeave(it[0].toString())
         }?.on("newUserJoin"){

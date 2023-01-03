@@ -86,7 +86,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
     rtmpUSB.setNumRetriesConnect(1000)
 
 //    webRtcManager.init(this)
-//    webRtcManager.connect(Constants.WEBRTC_SOCKET_SERVER)
+    webRtcManager.connect(Constants.WEBRTC_SOCKET_SERVER, token)
 
     if (!folderRecord.exists()){
       folderRecord.mkdirs()
@@ -140,6 +140,12 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
         } else {
           vibrator.vibrate(200)
         }
+      }
+    }
+    webRtcManager.onCallLeaveCallback = fun(){
+      Log.d(TAG, "------ callback: onCallLeaveCallback")
+      runOnUiThread {
+        end_call_btn.visibility = View.GONE
       }
     }
   }
