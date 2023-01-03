@@ -16,11 +16,9 @@ import retrofit2.Callback
 import retrofit2.Response
 
 class LoginActivity : AppCompatActivity() {
-    private val webRtcManager by lazy { WebRtcClient.instance }
     private val agentClient = AgentClient()
     private lateinit var sessionManager: SessionManager
     private val logService = LogService.getInstance()
-    private var webRtcToken : String ?= ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,8 +26,6 @@ class LoginActivity : AppCompatActivity() {
 
         agentClient.get_instance()
         sessionManager = SessionManager(this)
-
-        webRtcManager.init(this)
 
         et_username.setText("vsmart")
         et_password?.setText("123456aA@")
@@ -39,15 +35,6 @@ class LoginActivity : AppCompatActivity() {
 //            bt_login.background = getDrawable(R.drawable.button_background_disabled)
             val result = onClickLogin()
         }
-    }
-
-    override fun onResume() {
-        super.onResume()
-//        webRtcManager.connect(Constants.WEBRTC_SOCKET_SERVER, )
-//        webRtcManager.onUserJoined = fun(token){
-//            Log.d(TAG, "login screen get token user joined: $token")
-//            webRtcToken = token
-//        }
     }
 
     override fun onBackPressed() {
@@ -71,8 +58,7 @@ class LoginActivity : AppCompatActivity() {
 
         agentClient.get_instance().login(
             LoginRequest(account = et_username.text.toString().trim(),
-                password = et_password.text.toString().trim(),
-                call_token = webRtcToken.toString()
+                password = et_password.text.toString().trim()
             )
         )
             .enqueue(object : Callback<LoginResponse> {

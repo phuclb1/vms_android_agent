@@ -11,22 +11,15 @@ import org.webrtc.*
 import java.util.*
 
 
-/***
- * Create by kgxl on 2019/7/23
- */
 class WebRtcClient private constructor() {
     private val AUDIO_TRACK_ID = "ARDAMSa0"
-    private var uuid = UUID.randomUUID().toString()
     private val TAG = "WebRtcClient"
-    private var serviceGenerateId = false
     private var isCall = false
     private val iceServers = LinkedList<PeerConnection.IceServer>()
     private val peers: HashMap<String, RealPeer> = hashMapOf()
     private var defaultMute = false
 
     private var fromCalling = ""
-
-    private var is_caller = true
 
     companion object {
         val instance by lazy(LazyThreadSafetyMode.SYNCHRONIZED) { WebRtcClient() }
@@ -48,19 +41,17 @@ class WebRtcClient private constructor() {
 
     private val mPeerConnectionObserver: PeerConnection.Observer = object : PeerConnection.Observer {
         override fun onIceCandidate(candidate: IceCandidate) {
-            if(is_caller) {
-                try {
-                    val payload = JSONObject()
-                    payload.put("label", candidate.sdpMLineIndex)
-                    payload.put("id", candidate.sdpMid)
-                    payload.put("candidate", candidate.sdp)
+            try {
+                val payload = JSONObject()
+                payload.put("label", candidate.sdpMLineIndex)
+                payload.put("id", candidate.sdpMid)
+                payload.put("candidate", candidate.sdp)
 
-                    Log.d(TAG, "uuid=$fromCalling   \npayload=$payload")
+                Log.d(TAG, "fromCalling=$fromCalling   \npayload=$payload")
 
-                    SocketManager.instance.sendMessage(fromCalling, "candidate", payload)
-                } catch (e: JSONException) {
-                    e.printStackTrace()
-                }
+                SocketManager.instance.sendMessage(fromCalling, "candidate", payload)
+            } catch (e: JSONException) {
+                e.printStackTrace()
             }
         }
 
@@ -79,18 +70,14 @@ class WebRtcClient private constructor() {
             }
             if (state == PeerConnection.IceConnectionState.DISCONNECTED) {
                 peers.keys.forEach {
-                    if (!it.equals(uuid)) {
-                        peers.remove(it)
-                    }
+                    peers.remove(it)
                 }
                 isCall = false
                 mPeerConnection?.close()
             }
             if (state == PeerConnection.IceConnectionState.CLOSED) {
                 peers.keys.forEach {
-                    if (!it.equals(uuid)) {
-                        peers.remove(it)
-                    }
+                    peers.remove(it)
                 }
                 isCall = false
                 mPeerConnection?.close()
@@ -161,7 +148,6 @@ class WebRtcClient private constructor() {
 
             override fun disconnect() {
                 Log.e(TAG, "disconnect")
-                serviceGenerateId = false
             }
 
             override fun connecting() {
@@ -169,16 +155,6 @@ class WebRtcClient private constructor() {
             }
         })
         SocketManager.instance.setOnReceiveMsgListener(object : SocketManager.onRtcListener {
-            override fun userJoin(signal: String) {
-                uuid = signal
-                serviceGenerateId = true
-                Log.e(TAG, "userJoin-->$signal")
-            }
-
-            override fun userLeave(signal: String) {
-                Log.e(TAG, "userLeave-->$signal")
-            }
-
             override fun result(msg: String) {
                 Log.e(TAG, "result-->$msg")
             }
@@ -187,28 +163,16 @@ class WebRtcClient private constructor() {
                 val data = JSONObject(msg)
                 Log.d(TAG, "receiveMsg: $data")
                 try {
-                    val from = data.optString("from")
                     val type = data.optString("type")
 
                     if (type == "leave"){
                         Log.e(TAG, "------> leave call")
-                        onCallLeaveCallback()
-                        peers.keys.forEach {
-                            if (!it.equals(uuid)) {
-                                peers.remove(it)
-                            }
-                        }
-                        isCall = false
-                        mPeerConnection?.close()
+                        onRecieveMsgLeave()
                     }
                     else {
-
-                        var payload: JSONObject? = null
-                        if (type != "init" && type != "leave") {
-                            payload = data.getJSONObject("payload")
-                            mPayload = payload
-                        }
-
+                        val from = data.optString("from")
+                        var payload: JSONObject = data.getJSONObject("payload")
+                        mPayload = payload
                         fromCalling = from
                         if (!peers.containsKey(from)) {
                             mPeerConnection = createPeerConnect()
@@ -222,22 +186,9 @@ class WebRtcClient private constructor() {
                             val peer = RealPeer(from, mPeerConnection!!)
                             peers[from] = peer
                         }
-                        if (type == "init") {
-                            onCallingCallback()
-                        } else if (type == "offer") {
+                        if (type == "offer") {
                             onCallingCallback()
                         }
-//                    else if (type == "leave"){
-//                        Log.e(TAG, "------> leave call")
-//                        peers.keys.forEach {
-//                            if (!it.equals(uuid)) {
-//                                peers.remove(it)
-//                            }
-//                        }
-//                        isCall = false
-//                        mPeerConnection?.close()
-//                        onCallLeaveCallback()
-//                    }
                         else {
                             commandMap[type]?.execute(from, payload)
                         }
@@ -249,6 +200,15 @@ class WebRtcClient private constructor() {
             }
         })
         SocketManager.instance.connectSocket(address, token)
+    }
+
+    fun onRecieveMsgLeave(){
+        onCallLeaveCallback()
+        peers.keys.forEach {
+            peers.remove(it)
+        }
+        isCall = false
+        mPeerConnection?.close()
     }
 
     /**
@@ -295,20 +255,6 @@ class WebRtcClient private constructor() {
         return audioConstraints
     }
 
-    fun startCall() {
-        if(is_caller) {
-            if (!serviceGenerateId || TextUtils.isEmpty(uuid)) {
-                Toast.makeText(context, "Connection failed", Toast.LENGTH_SHORT).show()
-                return
-            }
-            if (serviceGenerateId && !getIsCall()) {
-                uuid = "KHV3IwIRiCiRoOCXAAFL"
-                Log.d(TAG, "call to ---> $uuid")
-                SocketManager.instance.sendMessage(uuid, "init", null)
-            }
-        }
-    }
-
     fun startAnswer(){
         if (peers.containsKey(fromCalling))
         {
@@ -321,9 +267,7 @@ class WebRtcClient private constructor() {
     fun closeCall(){
         if (peers.containsKey(fromCalling)){
             peers.keys.forEach {
-                if (it != uuid) {
-                    peers.remove(it)
-                }
+                peers.remove(it)
             }
             isCall = false
             SocketManager.instance.sendLeaveMessage(fromCalling, "leave")

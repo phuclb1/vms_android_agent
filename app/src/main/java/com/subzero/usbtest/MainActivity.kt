@@ -50,7 +50,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
   private var token: String = ""
   private var flagRecording = false
   private var fileRecording: String = ""
-  private var isCalling = false
+//  private var isCalling = false
 
   private val logService = LogService.getInstance()
 
@@ -85,7 +85,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
     usbMonitor.register()
     rtmpUSB.setNumRetriesConnect(1000)
 
-//    webRtcManager.init(this)
+    webRtcManager.init(this)
     webRtcManager.connect(Constants.WEBRTC_SOCKET_SERVER, token)
 
     if (!folderRecord.exists()){

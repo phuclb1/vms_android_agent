@@ -2,15 +2,11 @@ package com.subzero.usbtest.rtc
 
 import android.util.Log
 import io.socket.client.IO
-import io.socket.client.Manager
 import io.socket.client.Socket
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
 
-/***
- * Create by kgxl on 2019/7/23
- */
 class SocketManager {
     private var mSocket: Socket? = null
     private var mOnConnectStateListener: onConnectStateListener? = null
@@ -30,8 +26,6 @@ class SocketManager {
     }
 
     interface onRtcListener {
-        fun userJoin(signal: String)
-        fun userLeave(signal: String)
         fun receiveMsg(msg: String)
         fun result(msg: String)
     }
@@ -78,30 +72,9 @@ class SocketManager {
         }?.on(Socket.EVENT_DISCONNECT) {
             mOnConnectStateListener?.disconnect()
         }?.on("message") {
-//            for(i in it){
-//                Log.e("${it.size} Socket manager: message: ","${i}")
-//            }
-
             var message = JSONArray(it)
-            Log.e("Socketmanager message", message[0].toString())
+//            Log.e("Socketmanager message", message[0].toString())
             mOnRtcListener?.receiveMsg(message[0].toString())
-
-//            if(message["type"] == "id"){
-//                mOnRtcListener?.userJoin(message["payload"].toString())
-//            }
-//            else{
-//                mOnRtcListener?.receiveMsg(message.toString())
-//            }
-//            Log.e("${it.size} Socket manager: message: ","${message["type"]}")
-
-//
-//            mOnRtcListener?.receiveMsg(it[0].toString())
-        }?.on("id") {
-//            mOnRtcListener?.userJoin(content.toString())
-        }?.on("leave"){
-            mOnRtcListener?.userLeave(it[0].toString())
-        }?.on("newUserJoin"){
-            mOnRtcListener?.receiveMsg(it[0].toString())
         }?.on("errorMsg"){
             mOnRtcListener?.result(it[0].toString())
         }
