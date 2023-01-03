@@ -3,20 +3,24 @@ package com.subzero.usbtest
 import android.content.Intent
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
+import android.util.Log
 import android.view.View
 import android.widget.Toast
 import com.subzero.usbtest.api.AgentClient
 import com.subzero.usbtest.models.LoginRequest
 import com.subzero.usbtest.models.LoginResponse
+import com.subzero.usbtest.rtc.WebRtcClient
 import kotlinx.android.synthetic.main.activity_login.*
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
 class LoginActivity : AppCompatActivity() {
+    private val webRtcManager by lazy { WebRtcClient.instance }
     private val agentClient = AgentClient()
     private lateinit var sessionManager: SessionManager
     private val logService = LogService.getInstance()
+    private var webRtcToken : String ?= ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -25,6 +29,8 @@ class LoginActivity : AppCompatActivity() {
         agentClient.get_instance()
         sessionManager = SessionManager(this)
 
+        webRtcManager.init(this)
+
         et_username.setText("vsmart")
         et_password?.setText("123456aA@")
         tv_error_info.visibility = View.GONE
@@ -32,6 +38,15 @@ class LoginActivity : AppCompatActivity() {
         bt_login.setOnClickListener {
 //            bt_login.background = getDrawable(R.drawable.button_background_disabled)
             val result = onClickLogin()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        webRtcManager.connect(Constants.WEBRTC_SOCKET_SERVER)
+        webRtcManager.onUserJoined = fun(token){
+            Log.d(TAG, "login screen get token user joined: $token")
+            webRtcToken = token
         }
     }
 
@@ -56,7 +71,8 @@ class LoginActivity : AppCompatActivity() {
 
         agentClient.get_instance().login(
             LoginRequest(account = et_username.text.toString().trim(),
-                password = et_password.text.toString().trim()
+                password = et_password.text.toString().trim(),
+                call_token = webRtcToken.toString()
             )
         )
             .enqueue(object : Callback<LoginResponse> {

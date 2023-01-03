@@ -28,8 +28,6 @@ class WebRtcClient private constructor() {
 
     private var is_caller = true
 
-    private lateinit var callback: WebRtcClientCallback
-
     companion object {
         val instance by lazy(LazyThreadSafetyMode.SYNCHRONIZED) { WebRtcClient() }
     }
@@ -46,6 +44,7 @@ class WebRtcClient private constructor() {
 
     var onIceConnectionChangeCallback = fun(x: PeerConnection.IceConnectionState) {}
     var onCallingCallback = fun(){}
+    var onUserJoined = fun(token: String){}
 
     private val mPeerConnectionObserver: PeerConnection.Observer = object : PeerConnection.Observer {
         override fun onIceCandidate(candidate: IceCandidate) {
@@ -165,6 +164,7 @@ class WebRtcClient private constructor() {
                 uuid = signal
                 serviceGenerateId = true
                 Log.e(TAG, "userJoin-->$signal")
+                onUserJoined(signal)
             }
 
             override fun userLeave(signal: String) {
@@ -334,7 +334,7 @@ class WebRtcClient private constructor() {
     private inner class CreateAnswerCommand : Command {
         @Throws(JSONException::class)
         override fun execute(peerId: String, payload: JSONObject?) {
-            Log.d(TAG, "CreateAnswerCommand: peerId=$peerId")
+            Log.d(TAG, "CreateAnswerCommand: peerId=$peerId  \n payload=$payload")
             val peer = peers[peerId]
             val sdp = SessionDescription(
                 SessionDescription.Type.fromCanonicalForm(payload?.getString("type")),
@@ -392,29 +392,7 @@ class WebRtcClient private constructor() {
         println("after audio mode--->" + am.isWiredHeadsetOn + "---" + am.mode + "----" + am.isSpeakerphoneOn)
     }
 
-
-
-//    fun setPeerConnectionObserver(m: PeerConnection.Observer){
-////        mPeerConnectionObserver = m
-//    }
-//
-//    fun setIscall(value : Boolean){
-//        isCall = value
-//    }
     fun getIsCall(): Boolean{
         return isCall
     }
-//
-//    fun closePeerConnection(){
-//        mPeerConnection?.close()
-//    }
-//    fun removeIceCandidates(candidates: Array<out IceCandidate>?){
-//        mPeerConnection?.removeIceCandidates(candidates)
-//    }
-//
-//    fun getFromCalling(): String{
-//        return fromCalling
-//    }
-
-//    data class mPeerConnectionObserver
 }

@@ -28,7 +28,6 @@ import java.io.File
 import java.io.IOException
 
 class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
-//  private val rtcManager by lazy { RtcSdkManager.instance }
   private val webRtcManager by lazy { WebRtcClient.instance }
 
   private val agentClient = AgentClient()
@@ -86,10 +85,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
     usbMonitor.register()
     rtmpUSB.setNumRetriesConnect(1000)
 
-//    rtcManager.init(this)
-//    rtcManager.connect(Constants.WEBRTC_SOCKET_SERVER)
-    webRtcManager.init(this)
-    webRtcManager.connect(Constants.WEBRTC_SOCKET_SERVER)
+//    webRtcManager.init(this)
+//    webRtcManager.connect(Constants.WEBRTC_SOCKET_SERVER)
 
     if (!folderRecord.exists()){
       folderRecord.mkdirs()
@@ -101,6 +98,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
     decline_call_btn.setOnClickListener { onDeclineCall() }
     accept_call_btn.setOnClickListener { onAcceptCall() }
     end_call_btn.setOnClickListener { onEndCall() }
+    btn_switch_audio.setOnClickListener {
+      webRtcManager.switchAudioMode()
+    }
 
 //    btn_answer.setOnClickListener {
 //      if(isCalling){
