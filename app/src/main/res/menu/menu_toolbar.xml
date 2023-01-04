@@ -2,19 +2,11 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
-        android:id="@+id/menu_takepic"
-        android:title="takingPhotos(拍照)"
+        android:id="@+id/menu_setting"
+        android:title="Setting"
         app:showAsAction="never" />
     <item
-        android:id="@+id/menu_recording"
-        android:title="recording(录像)"
-        app:showAsAction="never" />
-    <item
-        android:id="@+id/menu_focus"
-        android:title="cameraFocus(对焦)"
-        app:showAsAction="never" />
-    <item
-        android:id="@+id/menu_resolution"
-        android:title="resolution(分辨率)"
+        android:id="@+id/menu_about"
+        android:title="About"
         app:showAsAction="never" />
 </menu>

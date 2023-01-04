@@ -1,6 +1,7 @@
 package com.subzero.usbtest
 
 //import com.pedro.rtmp.utils.ConnectCheckerRtmp
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
@@ -10,10 +11,9 @@ import android.hardware.usb.UsbDevice
 import android.os.*
 import android.support.v4.app.ActivityCompat
 import android.util.Log
-import android.view.SurfaceHolder
-import android.view.View
-import android.view.WindowManager
+import android.view.*
 import android.widget.Toast
+import android.widget.Toolbar
 import com.serenegiant.usb.USBMonitor
 import com.serenegiant.usb.UVCCamera
 import com.subzero.usbtest.api.AgentClient
@@ -150,6 +150,21 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
         end_call_btn.visibility = View.GONE
       }
     }
+  }
+
+  override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+    menuInflater.inflate(R.menu.menu_toolbar, menu)
+    return true
+  }
+
+  override fun onOptionsItemSelected(item: MenuItem?): Boolean {
+    if (item != null) {
+      when(item.itemId){
+        R.id.menu_setting -> {}
+        R.id.menu_about -> {}
+      }
+    }
+    return super.onOptionsItemSelected(item)
   }
 
   override fun onDestroy() {

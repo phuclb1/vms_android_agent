@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">VTCameraAgent</string>
+    <string name="app_name">VT Camera Agent</string>
     <string name="livestream">Livestream</string>
     <string name="start">Start</string>
     <string name="stop">Stop</string>
