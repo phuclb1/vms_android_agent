@@ -5,6 +5,7 @@ import android.media.AudioManager
 import android.text.TextUtils
 import android.util.Log
 import android.widget.Toast
+import com.subzero.usbtest.Constants
 import org.json.JSONException
 import org.json.JSONObject
 import org.webrtc.*
@@ -56,9 +57,11 @@ class WebRtcClient private constructor() {
         }
 
         override fun onDataChannel(p0: DataChannel?) {
+            Log.d(TAG, "------- onDataChannel")
         }
 
         override fun onIceConnectionReceivingChange(p0: Boolean) {
+            Log.d(TAG, "------- onIceConnectionReceivingChange")
         }
 
         override fun onIceConnectionChange(state: PeerConnection.IceConnectionState?) {
@@ -74,7 +77,6 @@ class WebRtcClient private constructor() {
             if (state == PeerConnection.IceConnectionState.CLOSED) {
                 peers.clear()
                 isCall = false
-//                mPeerConnection?.dispose()
             }
             Log.e(TAG, "onIceConnectionChange-->$state")
 
@@ -84,6 +86,7 @@ class WebRtcClient private constructor() {
         }
 
         override fun onIceGatheringChange(p0: PeerConnection.IceGatheringState?) {
+            Log.d(TAG, "------- onIceGatheringChange")
         }
 
         override fun onAddStream(p0: MediaStream?) {
@@ -91,21 +94,26 @@ class WebRtcClient private constructor() {
         }
 
         override fun onSignalingChange(p0: PeerConnection.SignalingState?) {
+            Log.d(TAG, "------- onSignalingChange")
         }
 
         override fun onIceCandidatesRemoved(candidates: Array<out IceCandidate>?) {
             mPeerConnection?.removeIceCandidates(candidates)
+            Log.d(TAG, "------- onIceCandidatesRemoved")
         }
 
         override fun onRemoveStream(p0: MediaStream?) {
             mPeerConnection?.close()
+            Log.d(TAG, "------- onRemoveStream")
         }
 
         override fun onRenegotiationNeeded() {
+            Log.d(TAG, "------- onRenegotiationNeeded")
         }
 
         override fun onAddTrack(rtpReceiver: RtpReceiver?, p1: Array<out MediaStream>?) {
             isCall = true
+            Log.d(TAG, "------- onAddTrack")
         }
     }
 
@@ -208,16 +216,18 @@ class WebRtcClient private constructor() {
         context: Context
     ) {
         this.context = context
-        iceServers.add(PeerConnection.IceServer.builder("stun:23.21.150.121").createIceServer())
-        iceServers.add(PeerConnection.IceServer.builder("stun:stun.l.google.com:19302").createIceServer())
-//        iceServers.add(PeerConnection.IceServer.builder("stun:103.160.75.40:443").setUsername("admin").setPassword("admin").createIceServer())
-//        iceServers.add(PeerConnection.IceServer.builder("turn:103.160.75.40:443").setUsername("admin").setPassword("admin").createIceServer())
+//        iceServers.add(PeerConnection.IceServer.builder("stun:23.21.150.121").createIceServer())
+//        iceServers.add(PeerConnection.IceServer.builder("stun:stun.l.google.com:19302").createIceServer())
+        iceServers.add(PeerConnection.IceServer.builder(Constants.STUN_URI)
+            .createIceServer())
+        iceServers.add(PeerConnection.IceServer.builder(Constants.TURN_URI)
+            .setUsername(Constants.TURN_USER)
+            .setPassword(Constants.TURN_PASS)
+            .createIceServer())
 
         //peerConnectFactory
         peerFactory = createPeerFactory(context)
-//        if (BuildConfig.DEBUG) {
-//            Logging.enableLogToDebugOutput(Logging.Severity.LS_VERBOSE)
-//        }
+        Log.e(TAG, Logging.Severity.LS_VERBOSE.toString())
 
         val audioSource = peerFactory?.createAudioSource(createAudioConstraints())
         mAudioTrack = peerFactory?.createAudioTrack(AUDIO_TRACK_ID, audioSource)

@@ -30,7 +30,7 @@ class LoginActivity : AppCompatActivity() {
         agentClient.get_instance()
         sessionManager = SessionManager(this)
 
-        et_username.setText("demoevn")
+        et_username.setText("vsmart")
         et_password?.setText("123456aA@")
         tv_error_info.visibility = View.GONE
 
