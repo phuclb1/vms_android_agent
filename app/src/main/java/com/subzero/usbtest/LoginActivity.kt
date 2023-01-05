@@ -2,6 +2,8 @@ package com.subzero.usbtest
 
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.View
@@ -19,6 +21,7 @@ class LoginActivity : AppCompatActivity() {
     private val agentClient = AgentClient()
     private lateinit var sessionManager: SessionManager
     private val logService = LogService.getInstance()
+    private var doubleBackToExitPressedOnce = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -27,7 +30,7 @@ class LoginActivity : AppCompatActivity() {
         agentClient.get_instance()
         sessionManager = SessionManager(this)
 
-        et_username.setText("vsmart")
+        et_username.setText("demoevn")
         et_password?.setText("123456aA@")
         tv_error_info.visibility = View.GONE
 
@@ -38,8 +41,14 @@ class LoginActivity : AppCompatActivity() {
     }
 
     override fun onBackPressed() {
-        super.onBackPressed()
-        finishAndRemoveTask()
+        if(this.doubleBackToExitPressedOnce) {
+            super.onBackPressed()
+            finishAndRemoveTask()
+            return
+        }
+        this.doubleBackToExitPressedOnce = true
+        Toast.makeText(this, "Please click BACK again to exit", Toast.LENGTH_SHORT).show()
+        Handler(Looper.getMainLooper()).postDelayed(Runnable { doubleBackToExitPressedOnce = false }, 2000)
     }
 
     private fun onClickLogin():Boolean{
