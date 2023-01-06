@@ -5,13 +5,11 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.support.v7.app.AppCompatActivity
-import android.util.Log
 import android.view.View
 import android.widget.Toast
 import com.subzero.usbtest.api.AgentClient
 import com.subzero.usbtest.models.LoginRequest
 import com.subzero.usbtest.models.LoginResponse
-import com.subzero.usbtest.rtc.WebRtcClient
 import kotlinx.android.synthetic.main.activity_login.*
 import retrofit2.Call
 import retrofit2.Callback
@@ -22,6 +20,7 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var sessionManager: SessionManager
     private val logService = LogService.getInstance()
     private var doubleBackToExitPressedOnce = false
+    private lateinit var intent_activity : Intent
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,12 +29,14 @@ class LoginActivity : AppCompatActivity() {
         agentClient.get_instance()
         sessionManager = SessionManager(this)
 
+        intent_activity = Intent(applicationContext, USBStreamActivity::class.java)
+//        intent_activity = Intent(applicationContext, CameraStreamActivity::class.java)
+
         et_username.setText("vsmart")
         et_password?.setText("123456aA@")
         tv_error_info.visibility = View.GONE
 
         bt_login.setOnClickListener {
-//            bt_login.background = getDrawable(R.drawable.button_background_disabled)
             val result = onClickLogin()
         }
     }
@@ -55,13 +56,11 @@ class LoginActivity : AppCompatActivity() {
         if(et_username.text.isNullOrBlank()){
             displayLoginErrorInfo(404)
             et_username.requestFocus()
-//            bt_login.background = getDrawable(R.drawable.custom_button)
             return true
         }
         if(et_password.text.isNullOrBlank()){
             displayLoginErrorInfo(401)
             et_password.requestFocus()
-//            bt_login.background = getDrawable(R.drawable.custom_button)
             return true
         }
 
@@ -79,23 +78,19 @@ class LoginActivity : AppCompatActivity() {
                     val loginResponse = response.body()
                     logService.appendLog(text = loginResponse?.authToken.toString(), tag = TAG)
                     if(loginResponse?.authToken.isNullOrEmpty()){
-//                        Toast.makeText(applicationContext, "Login failure: code ${response.code()}", Toast.LENGTH_LONG).show()
-//                        bt_login.background = getDrawable(R.drawable.custom_button)
                         logService.appendLog(text = "Login failure: code ${response.code()}", tag = TAG)
                         displayLoginErrorInfo(response.code())
                     }else{
                         val authToken = loginResponse?.authToken.toString()
                         sessionManager.saveAuthToken(authToken)
-                        val intent = Intent(applicationContext, MainActivity::class.java)
-                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                        startActivity(intent)
+                        intent_activity.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                        startActivity(intent_activity)
                         logService.appendLog("Login success", TAG)
                     }
                 }
 
                 override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
                     Toast.makeText(applicationContext, "Login failure", Toast.LENGTH_LONG).show()
-//                    bt_login.background = getDrawable(R.drawable.custom_button)
                     logService.appendLog("Login response fail", TAG)
                     displayLoginErrorInfo(1)
                 }

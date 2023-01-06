@@ -1,7 +1,6 @@
 package com.subzero.usbtest
 
 //import com.pedro.rtmp.utils.ConnectCheckerRtmp
-import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
@@ -13,7 +12,6 @@ import android.support.v4.app.ActivityCompat
 import android.util.Log
 import android.view.*
 import android.widget.Toast
-import android.widget.Toolbar
 import com.serenegiant.usb.USBMonitor
 import com.serenegiant.usb.UVCCamera
 import com.subzero.usbtest.api.AgentClient
@@ -27,7 +25,7 @@ import org.webrtc.PeerConnection
 import java.io.File
 import java.io.IOException
 
-class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
+class USBStreamActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
   private val webRtcManager by lazy { WebRtcClient.instance }
 
   private val agentClient = AgentClient()
@@ -490,7 +488,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
       override fun onFailure(call: Call, e: IOException) {
         logService.appendLog("upload video failed: ${e.message.toString()}", TAG)
         runOnUiThread {
-          Toast.makeText(this@MainActivity, "Upload failed: ${e.message.toString()}", Toast.LENGTH_SHORT).show()
+          Toast.makeText(this@USBStreamActivity, "Upload failed: ${e.message.toString()}", Toast.LENGTH_SHORT).show()
         }
       }
 
@@ -501,7 +499,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp {
           file.delete()
         }
         runOnUiThread {
-          Toast.makeText(this@MainActivity, "Upload success $responseData", Toast.LENGTH_SHORT).show()
+          Toast.makeText(this@USBStreamActivity, "Upload success $responseData", Toast.LENGTH_SHORT).show()
         }
       }
 
