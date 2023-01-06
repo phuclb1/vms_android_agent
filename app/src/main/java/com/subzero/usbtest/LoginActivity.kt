@@ -29,8 +29,10 @@ class LoginActivity : AppCompatActivity() {
         agentClient.get_instance()
         sessionManager = SessionManager(this)
 
-        intent_activity = Intent(applicationContext, USBStreamActivity::class.java)
-//        intent_activity = Intent(applicationContext, CameraStreamActivity::class.java)
+        intent_activity = if(Constants.IS_DEFAULT_USB_CAMERA)
+            Intent(applicationContext, USBStreamActivity::class.java)
+        else
+            Intent(applicationContext, CameraStreamActivity::class.java)
 
         et_username.setText("vsmart")
         et_password?.setText("123456aA@")

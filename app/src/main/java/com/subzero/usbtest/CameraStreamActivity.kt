@@ -1,6 +1,5 @@
 package com.subzero.usbtest
 
-//import com.pedro.rtmp.utils.ConnectCheckerRtmp
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
@@ -11,12 +10,12 @@ import android.support.v4.app.ActivityCompat
 import android.util.Log
 import android.view.*
 import android.widget.Toast
+import com.pedro.rtmp.utils.ConnectCheckerRtmp
 import com.pedro.rtplibrary.rtmp.RtmpCamera2
 import com.subzero.usbtest.api.AgentClient
 import com.subzero.usbtest.rtc.WebRtcClient
 import com.subzero.usbtest.utils.CustomizedExceptionHandler
 import kotlinx.android.synthetic.main.activity_main.*
-import net.ossrs.rtmp.ConnectCheckerRtmp
 import okhttp3.*
 import org.webrtc.PeerConnection
 import java.io.File
@@ -148,6 +147,16 @@ class CameraStreamActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerR
       when(item.itemId){
         R.id.menu_setting -> {}
         R.id.menu_about -> {}
+        R.id.menu_phone_cam -> {
+          val intent_activity = Intent(applicationContext, CameraStreamActivity::class.java)
+          intent_activity.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+          startActivity(intent_activity)
+        }
+        R.id.menu_usb_cam -> {
+          val intent_activity = Intent(applicationContext, USBStreamActivity::class.java)
+          intent_activity.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+          startActivity(intent_activity)
+        }
       }
     }
     return super.onOptionsItemSelected(item)
@@ -230,6 +239,9 @@ class CameraStreamActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerR
   override fun onAuthSuccessRtmp() {
   }
 
+  override fun onConnectionStartedRtmp(rtmpUrl: String) {
+  }
+
   override fun onAuthErrorRtmp() {
   }
 
@@ -242,7 +254,7 @@ class CameraStreamActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerR
     }
   }
 
-  override fun onConnectionFailedRtmp(reason: String?) {
+  override fun onConnectionFailedRtmp(reason: String) {
     logService.appendLog("connect rtmp fail", TAG)
     if(!rtmpCamera.isRecording){
       val currentTimestamp = System.currentTimeMillis()
@@ -268,6 +280,9 @@ class CameraStreamActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerR
     runOnUiThread {
       Toast.makeText(this, "Disconnect", Toast.LENGTH_SHORT).show()
     }
+  }
+
+  override fun onNewBitrateRtmp(bitrate: Long) {
   }
 
   private fun hasPermissions(): Boolean {

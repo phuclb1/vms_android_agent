@@ -7,6 +7,7 @@ import java.io.File
 
 object Constants {
     const val ENABLE_SAVE_LOG = true
+    const val IS_DEFAULT_USB_CAMERA = true
     // API
     const val BASE_URL = "http://103.174.213.14:30084/api/v1/"
     const val API_LOGIN_URL = "auth/sign-in"
@@ -21,9 +22,6 @@ object Constants {
     const val TURN_PASS = "admin1"
 
     val RECORD_FOLDER = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).absolutePath + File.separator + "UsbStream")
-
-//    @SuppressLint("HardwareIds")
-//    var serialNumber: String = Build.SERIAL.toString()
 
     val CAMERA_REQUIRED_PERMISSIONS =
         mutableListOf (

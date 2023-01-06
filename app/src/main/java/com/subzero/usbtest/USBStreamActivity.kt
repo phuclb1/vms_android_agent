@@ -1,6 +1,5 @@
 package com.subzero.usbtest
 
-//import com.pedro.rtmp.utils.ConnectCheckerRtmp
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
@@ -12,6 +11,7 @@ import android.support.v4.app.ActivityCompat
 import android.util.Log
 import android.view.*
 import android.widget.Toast
+import com.pedro.rtmp.utils.ConnectCheckerRtmp
 import com.serenegiant.usb.USBMonitor
 import com.serenegiant.usb.UVCCamera
 import com.subzero.usbtest.api.AgentClient
@@ -19,7 +19,6 @@ import com.subzero.usbtest.rtc.WebRtcClient
 import com.subzero.usbtest.streamlib.RtmpUSB
 import com.subzero.usbtest.utils.CustomizedExceptionHandler
 import kotlinx.android.synthetic.main.activity_main.*
-import net.ossrs.rtmp.ConnectCheckerRtmp
 import okhttp3.*
 import org.webrtc.PeerConnection
 import java.io.File
@@ -102,16 +101,6 @@ class USBStreamActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp
       webRtcManager.switchAudioMode()
     }
 
-//    btn_answer.setOnClickListener {
-//      if(isCalling){
-//        // End call
-//        onEndCall()
-//      }else{
-//        // Answer call
-//        onAnswerCall()
-//      }
-//    }
-
     updateUIStream()
     updateRecordStatus()
 
@@ -160,6 +149,16 @@ class USBStreamActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp
       when(item.itemId){
         R.id.menu_setting -> {}
         R.id.menu_about -> {}
+        R.id.menu_phone_cam -> {
+          val intent_activity = Intent(applicationContext, CameraStreamActivity::class.java)
+          intent_activity.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+          startActivity(intent_activity)
+        }
+        R.id.menu_usb_cam -> {
+          val intent_activity = Intent(applicationContext, USBStreamActivity::class.java)
+          intent_activity.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+          startActivity(intent_activity)
+        }
       }
     }
     return super.onOptionsItemSelected(item)
@@ -316,6 +315,9 @@ class USBStreamActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp
   override fun onAuthSuccessRtmp() {
   }
 
+  override fun onConnectionStartedRtmp(rtmpUrl: String) {
+  }
+
   override fun onAuthErrorRtmp() {
   }
 
@@ -328,12 +330,7 @@ class USBStreamActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp
     }
   }
 
-  /*
-  Auto record video
-  Try reconnect
-  Upload recorded video when reconnected
-  * */
-  override fun onConnectionFailedRtmp(reason: String?) {
+  override fun onConnectionFailedRtmp(reason: String) {
     logService.appendLog("connect rtmp fail", TAG)
     if(!rtmpUSB.isRecording){
       val currentTimestamp = System.currentTimeMillis()
@@ -348,16 +345,6 @@ class USBStreamActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp
     if (!reconnect){
       rtmpUSB.setNumRetriesConnect(1000)
     }
-//    if (!reconnect){
-//      callStopStream()
-//    }
-//
-//    updateRecordStatus()
-//    runOnUiThread {
-//      if (!reconnect){
-//        Toast.makeText(this, "Rtmp connection failed! $reason", Toast.LENGTH_SHORT).show()
-//      }
-//    }
   }
 
   override fun onBackPressed() {
@@ -374,6 +361,9 @@ class USBStreamActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp
     runOnUiThread {
       Toast.makeText(this, "Disconnect", Toast.LENGTH_SHORT).show()
     }
+  }
+
+  override fun onNewBitrateRtmp(bitrate: Long) {
   }
 
   private fun hasPermissions(): Boolean {

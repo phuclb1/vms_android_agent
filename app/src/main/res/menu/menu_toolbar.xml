@@ -9,4 +9,12 @@
         android:id="@+id/menu_about"
         android:title="About"
         app:showAsAction="never" />
+    <item
+        android:id="@+id/menu_phone_cam"
+        android:title="Phone Camera"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/menu_usb_cam"
+        android:title="USB Camera"
+        app:showAsAction="never" />
 </menu>
