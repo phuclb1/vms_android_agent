@@ -8,6 +8,7 @@ import android.os.Build;
 import android.support.annotation.RequiresApi;
 import android.util.Log;
 
+import com.pedro.encoder.Frame;
 import com.pedro.encoder.audio.AudioEncoder;
 import com.pedro.encoder.audio.GetAacData;
 import com.pedro.encoder.input.audio.GetMicrophoneData;
@@ -522,15 +523,14 @@ public abstract class USBBase
         if (streaming) getH264DataRtp(h264Buffer, info);
     }
 
-//    @Override
-//    public void inputPCMData(byte[] buffer, int size) {
-//        audioEncoder.inputPCMData(buffer, size);
-//    }
-//
-//    @Override
-//    public void inputYUVData(Frame frame) {
-//        videoEncoder.inputYUVData(frame);
-//    }
+    @Override
+    public void inputPCMData(Frame frame) {
+        audioEncoder.inputPCMData(frame);
+    }
+    @Override
+    public void inputYUVData(Frame frame) {
+        videoEncoder.inputYUVData(frame);
+    }
 
     @Override
     public void onVideoFormat(MediaFormat mediaFormat) {

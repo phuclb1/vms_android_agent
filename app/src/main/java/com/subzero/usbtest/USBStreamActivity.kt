@@ -39,15 +39,13 @@ class USBStreamActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp
   private val width = 1280
   private val height = 720
   private val fps = 15
-  private val folderRecord = Constants.RECORD_FOLDER
+  private val folderRecord = File(Constants.DOC_DIR, "video_record")
 
-  private var isRotated = false
   private var isFlipped = false
 
   private var token: String = ""
   private var flagRecording = false
   private var fileRecording: String = ""
-//  private var isCalling = false
 
   private val logService = LogService.getInstance()
 
@@ -65,7 +63,6 @@ class USBStreamActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp
     sessionManager = SessionManager(this)
     token = sessionManager.fetchAuthToken().toString()
     val rtmpUrl = Constants.RTMP_URL_HEADER + token
-    logService.appendLog("RTMP url: $rtmpUrl", TAG)
 
     vibrator = this.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
 
@@ -144,7 +141,7 @@ class USBStreamActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp
     return true
   }
 
-  override fun onOptionsItemSelected(item: MenuItem?): Boolean {
+  override fun onOptionsItemSelected(item: MenuItem): Boolean {
     if (item != null) {
       when(item.itemId){
         R.id.menu_setting -> {}
@@ -381,9 +378,9 @@ class USBStreamActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp
    */
   private fun callStartStream(url: String) {
     logService.appendLog("call start stream", TAG)
-    if (rtmpUSB.prepareVideo(width, height, fps, 4000 * 1024, false, 0,
-        uvcCamera) && rtmpUSB.prepareAudio()) {
+    if(prepareEncoders()){
       rtmpUSB.startStream(uvcCamera, url)
+      rtmpUSB.enableAudio()
     }
   }
 
@@ -392,6 +389,26 @@ class USBStreamActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp
     if(rtmpUSB.isStreaming && uvcCamera != null){
       rtmpUSB.stopStream(uvcCamera)
       callStopRecord()
+    }
+  }
+
+  private fun prepareEncoders():Boolean{
+    try {
+      val sampleRate = 44100
+      val audioBitrate = 64000
+      val videoBitrate = 4000 * 1024
+      return rtmpUSB.prepareVideo(
+        width, height, fps, videoBitrate, false, 0, uvcCamera
+      )
+              && rtmpUSB.prepareAudio(
+        audioBitrate,
+        sampleRate,
+        true,
+        false,
+        false
+      )
+    } catch (e: java.lang.Exception){
+      return rtmpUSB.prepareVideo(uvcCamera) && rtmpUSB.prepareAudio()
     }
   }
 
@@ -427,7 +444,6 @@ class USBStreamActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp
       uploadVideo(File(fileRecording))
     }
   }
-
 
   /**
    * Update UI

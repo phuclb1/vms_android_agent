@@ -1,10 +1,13 @@
 package com.subzero.usbtest
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
+import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.support.v7.app.AppCompatActivity
+import android.util.Log
 import android.view.View
 import android.widget.Toast
 import com.subzero.usbtest.api.AgentClient
@@ -14,6 +17,7 @@ import kotlinx.android.synthetic.main.activity_login.*
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.io.File
 
 class LoginActivity : AppCompatActivity() {
     private val agentClient = AgentClient()
@@ -25,6 +29,14 @@ class LoginActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
+
+        val dir = File(
+            Environment.getExternalStorageDirectory(),
+            Constants.FOLDER_DOC_NAME
+        )
+        if (!dir.exists()) {
+            dir.mkdirs()
+        }
 
         agentClient.get_instance()
         sessionManager = SessionManager(this)
@@ -101,6 +113,7 @@ class LoginActivity : AppCompatActivity() {
         return true
     }
 
+    @SuppressLint("SetTextI18n")
     private fun displayLoginErrorInfo(code: Int){
         runOnUiThread {
             when(code){
@@ -117,7 +130,7 @@ class LoginActivity : AppCompatActivity() {
                     tv_error_info.visibility = View.VISIBLE
                 }
                 else -> {
-                    tv_error_info.setText(R.string.err_happen)
+                    tv_error_info.text = R.string.err_happen.toString() + ": $code"
                     tv_error_info.visibility = View.VISIBLE
                 }
             }

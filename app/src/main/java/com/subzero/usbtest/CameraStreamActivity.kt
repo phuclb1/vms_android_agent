@@ -29,12 +29,8 @@ class CameraStreamActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerR
   private lateinit var sessionManager: SessionManager
   private lateinit var rtmpCamera: RtmpCamera2
 
-  private val width = 720
-  private val height = 1280
-  private val fps = 15
-  private val folderRecord = Constants.RECORD_FOLDER
+  private val folderRecord = File(Constants.DOC_DIR, "video_record")
 
-  private var isRotated = false
   private var isFlipped = false
 
   private var token: String = ""
@@ -142,7 +138,7 @@ class CameraStreamActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerR
     return true
   }
 
-  override fun onOptionsItemSelected(item: MenuItem?): Boolean {
+  override fun onOptionsItemSelected(item: MenuItem): Boolean {
     if (item != null) {
       when(item.itemId){
         R.id.menu_setting -> {}

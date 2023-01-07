@@ -18,10 +18,15 @@ import java.util.*
 public class LogService private constructor(){
     private var previous_log_file: String = ""
     private var readyUploadFile: String = ""
+    private var dir_log: String = ""
 //    private var httpClient = OkHttpClient()
 
     init {
-
+        val folder_log = File(Constants.DOC_DIR, "log")
+        if(!folder_log.exists()){
+            folder_log.mkdirs()
+        }
+        dir_log = folder_log.absolutePath
     }
 
 //    fun getFileLog2Upload(): String {
@@ -36,7 +41,8 @@ public class LogService private constructor(){
 
         if (!Constants.ENABLE_SAVE_LOG) return
 
-        val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+//        val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+        val dir = dir_log
         val timestamp = SimpleDateFormat("yyyyMMdd_HH").format(Date())
         val fileName = "logfile_$timestamp.txt"
         val logfile = File(dir, fileName)

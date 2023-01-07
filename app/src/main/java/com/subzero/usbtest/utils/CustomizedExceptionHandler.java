@@ -3,6 +3,8 @@ package com.subzero.usbtest.utils;
 import android.os.Environment;
 import android.util.Log;
 
+import com.subzero.usbtest.Constants;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.PrintWriter;
@@ -46,7 +48,8 @@ public class CustomizedExceptionHandler implements UncaughtExceptionHandler {
         try {
 
             //Gets the Android external storage directory & Create new folder Crash_Reports
-            File dir = new File(Environment.getExternalStorageDirectory(),
+            File dir = new File(Environment.getExternalStorageDirectory().getAbsolutePath()
+                    + "/" + Constants.FOLDER_DOC_NAME,
                     "Crash_Reports");
             if (!dir.exists()) {
                 dir.mkdirs();

@@ -21,6 +21,8 @@ object Constants {
     const val TURN_USER = "admin1"
     const val TURN_PASS = "admin1"
 
+    const val FOLDER_DOC_NAME = "VTCameraAgent"
+    val DOC_DIR = Environment.getExternalStorageDirectory().absolutePath + "/$FOLDER_DOC_NAME"
     val RECORD_FOLDER = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).absolutePath + File.separator + "UsbStream")
 
     val CAMERA_REQUIRED_PERMISSIONS =
