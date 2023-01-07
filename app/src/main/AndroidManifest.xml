@@ -30,7 +30,7 @@
         android:supportsRtl="true"
         android:usesCleartextTraffic="true">
         <activity
-            android:name=".LoginActivity"
+            android:name=".activity.LoginActivity"
             android:theme="@style/AppTheme"
             android:exported="true">
             <intent-filter>
@@ -44,7 +44,7 @@
                 android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
                 android:resource="@xml/device_filterall" />
         </activity>
-        <activity android:name=".USBStreamActivity"
+        <activity android:name=".activity.USBStreamActivity"
             android:screenOrientation="portrait"
             android:theme="@style/StreamTheme"
             android:label="Stream"
@@ -59,7 +59,7 @@
                 android:name="android.app.lib_name"
                 android:value="" />
         </activity>
-        <activity android:name=".CameraStreamActivity"
+        <activity android:name=".activity.CameraStreamActivity"
             android:screenOrientation="portrait"
             android:theme="@style/StreamTheme"
             android:label="Camera Stream"

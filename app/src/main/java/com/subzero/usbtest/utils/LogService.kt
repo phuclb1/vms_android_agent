@@ -1,8 +1,8 @@
-package com.subzero.usbtest
+package com.subzero.usbtest.utils
 
 import android.annotation.SuppressLint
-import android.os.Environment
 import android.util.Log
+import com.subzero.usbtest.Constants
 //import okhttp3.MediaType.Companion.toMediaTypeOrNull
 //import okhttp3.MultipartBody
 //import okhttp3.OkHttpClient
@@ -101,7 +101,7 @@ public class LogService private constructor(){
         val INSTANCE = LogService()
     }
     companion object {
-        fun getInstance(): LogService{
+        fun getInstance(): LogService {
             return Holder.INSTANCE
         }
     }

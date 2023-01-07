@@ -1,7 +1,8 @@
-package com.subzero.usbtest
+package com.subzero.usbtest.utils
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.subzero.usbtest.R
 
 class SessionManager(context: Context) {
     private var prefs: SharedPreferences = context.getSharedPreferences(context.getString(R.string.app_name), Context.MODE_PRIVATE)

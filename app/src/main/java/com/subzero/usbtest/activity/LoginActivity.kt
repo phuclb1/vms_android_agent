@@ -1,4 +1,4 @@
-package com.subzero.usbtest
+package com.subzero.usbtest.activity
 
 import android.annotation.SuppressLint
 import android.content.Intent
@@ -7,12 +7,15 @@ import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.support.v7.app.AppCompatActivity
-import android.util.Log
 import android.view.View
 import android.widget.Toast
+import com.subzero.usbtest.Constants
+import com.subzero.usbtest.R
 import com.subzero.usbtest.api.AgentClient
 import com.subzero.usbtest.models.LoginRequest
 import com.subzero.usbtest.models.LoginResponse
+import com.subzero.usbtest.utils.LogService
+import com.subzero.usbtest.utils.SessionManager
 import kotlinx.android.synthetic.main.activity_login.*
 import retrofit2.Call
 import retrofit2.Callback
