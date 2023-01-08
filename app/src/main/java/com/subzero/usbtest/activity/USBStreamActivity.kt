@@ -510,11 +510,11 @@ class USBStreamActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp
       override fun onResponse(call: Call, response: Response) {
         val responseData = response.body().toString()
         logService.appendLog("upload video success: $responseData", TAG)
+        runOnUiThread {
+          Toast.makeText(this@USBStreamActivity, "Upload success ${file.name}", Toast.LENGTH_SHORT).show()
+        }
         if(file.exists()){
           file.delete()
-        }
-        runOnUiThread {
-          Toast.makeText(this@USBStreamActivity, "Upload success $responseData", Toast.LENGTH_SHORT).show()
         }
       }
 

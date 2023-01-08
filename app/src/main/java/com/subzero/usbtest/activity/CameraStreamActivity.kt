@@ -132,6 +132,7 @@ class CameraStreamActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerR
     try {
       openglview.holder.addCallback(this)
       rtmpCamera = RtmpCamera2(openglview, this)
+      rtmpCamera.setReTries(1000)
     } catch (e: Exception) {
       Log.e("error =", e.toString())
     }
@@ -261,6 +262,13 @@ class CameraStreamActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerR
         fileRecording = fileRecord
       }
     }
+
+    if(rtmpCamera.shouldRetry(reason)){
+      rtmpCamera.reConnect(1000)
+    }else{
+      rtmpCamera.setReTries(1000)
+    }
+
   }
 
   override fun onNewBitrateRtmp(bitrate: Long) {
@@ -426,11 +434,11 @@ class CameraStreamActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerR
       override fun onResponse(call: Call, response: Response) {
         val responseData = response.body().toString()
         logService.appendLog("upload video success: $responseData", TAG)
+        runOnUiThread {
+          Toast.makeText(this@CameraStreamActivity, "Upload success ${file.name}", Toast.LENGTH_SHORT).show()
+        }
         if(file.exists()){
           file.delete()
-        }
-        runOnUiThread {
-          Toast.makeText(this@CameraStreamActivity, "Upload success $responseData", Toast.LENGTH_SHORT).show()
         }
       }
 
