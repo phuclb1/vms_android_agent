@@ -66,7 +66,8 @@ class USBStreamActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp
 
     sessionManager = SessionManager(this)
     token = sessionManager.fetchAuthToken().toString()
-    val rtmpUrl = Constants.RTMP_URL_HEADER + token
+    var rtmpUrl = Constants.RTMP_URL_HEADER + token
+//    rtmpUrl = "rtmp://103.160.84.179:21935/live/livestream"
 
     vibrator = this.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
 

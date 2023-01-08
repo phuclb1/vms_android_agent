@@ -48,6 +48,7 @@ class LoginActivity : AppCompatActivity() {
             Intent(applicationContext, USBStreamActivity::class.java)
         else
             Intent(applicationContext, CameraStreamActivity::class.java)
+//        intent_activity = Intent(applicationContext, BackgroundCameraStreamActivity::class.java)
 
         et_username.setText("vsmart")
         et_password?.setText("123456aA@")

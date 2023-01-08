@@ -197,7 +197,6 @@ public abstract class USBBase
      * @param path where file will be saved.
      * @throws IOException If you init it before start stream.
      */
-    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     public void startRecord(UVCCamera uvcCamera, final String path) throws IOException {
         mediaMuxer = new MediaMuxer(path, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
         recording = true;
@@ -211,7 +210,6 @@ public abstract class USBBase
     /**
      * Stop record MP4 video started with @startRecord. If you don't call it file will be unreadable.
      */
-    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     public void stopRecord(UVCCamera uvcCamera) {
         recording = false;
         if (mediaMuxer != null) {
