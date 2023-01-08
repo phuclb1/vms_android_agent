@@ -263,6 +263,9 @@ class CameraStreamActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerR
     }
   }
 
+  override fun onNewBitrateRtmp(bitrate: Long) {
+  }
+
   override fun onBackPressed() {
     super.onBackPressed()
     val intent = Intent(applicationContext, LoginActivity::class.java)

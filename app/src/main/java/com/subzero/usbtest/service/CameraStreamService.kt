@@ -121,11 +121,11 @@ class CameraStreamService : Service() {
     }
 
     fun setView(openGlView: OpenGlView) {
-//        camera2Base?.replaceView(openGlView)
+        camera2Base?.replaceView(openGlView)
     }
 
     fun setView(context: Context) {
-//        camera2Base?.replaceView(context)
+        camera2Base?.replaceView(context)
     }
 
     private val connectCheckerRtp = object : ConnectCheckerRtmp {
@@ -138,6 +138,9 @@ class CameraStreamService : Service() {
         override fun onConnectionFailedRtmp(reason: String) {
             showNotification("Stream connection failed")
             Log.e(TAG, "RTP service destroy")
+        }
+
+        override fun onNewBitrateRtmp(bitrate: Long) {
         }
 
 

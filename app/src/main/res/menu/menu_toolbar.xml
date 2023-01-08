@@ -17,4 +17,9 @@
         android:id="@+id/menu_usb_cam"
         android:title="USB Camera"
         app:showAsAction="never" />
+    <item
+        android:id="@+id/menu_background_phone_cam"
+        android:title="Background Phone Camera"
+        app:showAsAction="never" />
+
 </menu>

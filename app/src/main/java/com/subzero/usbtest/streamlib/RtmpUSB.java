@@ -5,6 +5,7 @@ import android.media.MediaCodec;
 import android.os.Build;
 import android.support.annotation.RequiresApi;
 
+import com.pedro.encoder.Frame;
 import com.pedro.rtplibrary.view.LightOpenGlView;
 import com.pedro.rtplibrary.view.OpenGlView;
 
@@ -105,5 +106,6 @@ public class RtmpUSB extends USBBase {
     protected void getH264DataRtp(ByteBuffer h264Buffer, MediaCodec.BufferInfo info) {
         srsFlvMuxer.sendVideo(h264Buffer, info);
     }
+
 }
 

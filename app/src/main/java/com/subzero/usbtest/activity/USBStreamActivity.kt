@@ -161,6 +161,11 @@ class USBStreamActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp
           intent_activity.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
           startActivity(intent_activity)
         }
+        R.id.menu_background_phone_cam -> {
+          val intent_activity = Intent(applicationContext, BackgroundCameraStreamActivity::class.java)
+          intent_activity.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+          startActivity(intent_activity)
+        }
       }
     }
     return super.onOptionsItemSelected(item)
@@ -345,6 +350,9 @@ class USBStreamActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp
     if (!reconnect){
       rtmpUSB.setNumRetriesConnect(1000)
     }
+  }
+
+  override fun onNewBitrateRtmp(bitrate: Long) {
   }
 
   override fun onBackPressed() {
