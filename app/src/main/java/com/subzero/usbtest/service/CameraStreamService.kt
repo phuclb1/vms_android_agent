@@ -11,11 +11,11 @@ import android.os.Build
 import android.os.IBinder
 import android.support.v4.app.NotificationCompat
 import android.util.Log
-import com.pedro.rtmp.utils.ConnectCheckerRtmp
 import com.pedro.rtplibrary.base.Camera2Base
 import com.pedro.rtplibrary.rtmp.RtmpCamera2
 import com.pedro.rtplibrary.view.OpenGlView
 import com.subzero.usbtest.R
+import net.ossrs.rtmp.ConnectCheckerRtmp
 
 class CameraStreamService : Service() {
     companion object {
@@ -121,31 +121,25 @@ class CameraStreamService : Service() {
     }
 
     fun setView(openGlView: OpenGlView) {
-        camera2Base?.replaceView(openGlView)
+//        camera2Base?.replaceView(openGlView)
     }
 
     fun setView(context: Context) {
-        camera2Base?.replaceView(context)
+//        camera2Base?.replaceView(context)
     }
 
     private val connectCheckerRtp = object : ConnectCheckerRtmp {
-        override fun onConnectionStartedRtmp(rtpUrl: String) {
-            showNotification("Stream connection started")
-        }
 
         override fun onConnectionSuccessRtmp() {
             showNotification("Stream started")
             Log.e(TAG, "RTP service destroy")
         }
 
-        override fun onNewBitrateRtmp(bitrate: Long) {
-
-        }
-
         override fun onConnectionFailedRtmp(reason: String) {
             showNotification("Stream connection failed")
             Log.e(TAG, "RTP service destroy")
         }
+
 
         override fun onDisconnectRtmp() {
             showNotification("Stream stopped")

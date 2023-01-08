@@ -10,7 +10,6 @@ import android.support.v4.app.ActivityCompat
 import android.util.Log
 import android.view.*
 import android.widget.Toast
-import com.pedro.rtmp.utils.ConnectCheckerRtmp
 import com.pedro.rtplibrary.rtmp.RtmpCamera2
 import com.subzero.usbtest.Constants
 import com.subzero.usbtest.R
@@ -20,6 +19,7 @@ import com.subzero.usbtest.utils.CustomizedExceptionHandler
 import com.subzero.usbtest.utils.LogService
 import com.subzero.usbtest.utils.SessionManager
 import kotlinx.android.synthetic.main.activity_main.*
+import net.ossrs.rtmp.ConnectCheckerRtmp
 import okhttp3.*
 import org.webrtc.PeerConnection
 import java.io.File
@@ -239,9 +239,6 @@ class CameraStreamActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerR
   override fun onAuthSuccessRtmp() {
   }
 
-  override fun onConnectionStartedRtmp(rtmpUrl: String) {
-  }
-
   override fun onAuthErrorRtmp() {
   }
 
@@ -280,9 +277,6 @@ class CameraStreamActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerR
     runOnUiThread {
       Toast.makeText(this, "Disconnect", Toast.LENGTH_SHORT).show()
     }
-  }
-
-  override fun onNewBitrateRtmp(bitrate: Long) {
   }
 
   private fun hasPermissions(): Boolean {

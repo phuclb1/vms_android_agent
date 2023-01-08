@@ -8,12 +8,12 @@ import android.os.Build;
 import android.support.annotation.RequiresApi;
 import android.util.Log;
 
-import com.pedro.encoder.Frame;
 import com.pedro.encoder.audio.AudioEncoder;
 import com.pedro.encoder.audio.GetAacData;
 import com.pedro.encoder.input.audio.GetMicrophoneData;
 import com.pedro.encoder.input.audio.MicrophoneManager;
 import com.pedro.encoder.input.video.CameraHelper;
+import com.pedro.encoder.input.video.Frame;
 import com.pedro.encoder.input.video.GetCameraData;
 import com.pedro.encoder.utils.CodecUtil;
 import com.pedro.encoder.video.FormatVideoEncoder;
@@ -127,7 +127,7 @@ public abstract class USBBase
             stopPreview(uvcCamera);
             onPreview = true;
         }
-        return videoEncoder.prepareVideoEncoder(width, height, fps, bitrate, rotation,
+        return videoEncoder.prepareVideoEncoder(width, height, fps, bitrate, rotation, hardwareRotation,
                 iFrameInterval, FormatVideoEncoder.SURFACE);
     }
 
@@ -157,7 +157,7 @@ public abstract class USBBase
                                 boolean noiseSuppressor) {
         microphoneManager.createMicrophone(sampleRate, isStereo, echoCanceler, noiseSuppressor);
         prepareAudioRtp(isStereo, sampleRate);
-        return audioEncoder.prepareAudioEncoder(bitrate, sampleRate, isStereo, microphoneManager.getMaxInputSize());
+        return audioEncoder.prepareAudioEncoder(bitrate, sampleRate, isStereo);
     }
 
     /**
@@ -197,6 +197,7 @@ public abstract class USBBase
      * @param path where file will be saved.
      * @throws IOException If you init it before start stream.
      */
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     public void startRecord(UVCCamera uvcCamera, final String path) throws IOException {
         mediaMuxer = new MediaMuxer(path, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
         recording = true;
@@ -210,6 +211,7 @@ public abstract class USBBase
     /**
      * Stop record MP4 video started with @startRecord. If you don't call it file will be unreadable.
      */
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
     public void stopRecord(UVCCamera uvcCamera) {
         recording = false;
         if (mediaMuxer != null) {
@@ -392,22 +394,22 @@ public abstract class USBBase
         return videoEnabled;
     }
 
-//    /**
-//     * Disable send camera frames and send a black image with low bitrate(to reduce bandwith used)
-//     * instance it.
-//     */
-//    public void disableVideo() {
-//        videoEncoder.startSendBlackImage();
-//        videoEnabled = false;
-//    }
-//
-//    /**
-//     * Enable send camera frames.
-//     */
-//    public void enableVideo() {
-//        videoEncoder.stopSendBlackImage();
-//        videoEnabled = true;
-//    }
+    /**
+     * Disable send camera frames and send a black image with low bitrate(to reduce bandwith used)
+     * instance it.
+     */
+    public void disableVideo() {
+        videoEncoder.startSendBlackImage();
+        videoEnabled = false;
+    }
+
+    /**
+     * Enable send camera frames.
+     */
+    public void enableVideo() {
+        videoEncoder.stopSendBlackImage();
+        videoEnabled = true;
+    }
 
     public int getBitrate() {
         return videoEncoder.getBitRate();
@@ -492,10 +494,10 @@ public abstract class USBBase
 
     protected abstract void onSpsPpsVpsRtp(ByteBuffer sps, ByteBuffer pps, ByteBuffer vps);
 
-//    @Override
-//    public void onSpsPps(ByteBuffer sps, ByteBuffer pps) {
-//        if (streaming) onSpsPpsVpsRtp(sps, pps, null);
-//    }
+    @Override
+    public void onSpsPps(ByteBuffer sps, ByteBuffer pps) {
+        if (streaming) onSpsPpsVpsRtp(sps, pps, null);
+    }
 
     @Override
     public void onSpsPpsVps(ByteBuffer sps, ByteBuffer pps, ByteBuffer vps) {
@@ -522,9 +524,10 @@ public abstract class USBBase
     }
 
     @Override
-    public void inputPCMData(Frame frame) {
-        audioEncoder.inputPCMData(frame);
+    public void inputPCMData(byte[] buffer, int size) {
+        audioEncoder.inputPCMData(buffer, size);
     }
+
     @Override
     public void inputYUVData(Frame frame) {
         videoEncoder.inputYUVData(frame);
