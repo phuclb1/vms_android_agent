@@ -21,7 +21,7 @@
         android:id="@+id/menu_background_phone_cam"
         android:title="Background Phone Camera"
         app:showAsAction="never"
-        android:visible="false"
+        android:visible="true"
         />
 
 </menu>

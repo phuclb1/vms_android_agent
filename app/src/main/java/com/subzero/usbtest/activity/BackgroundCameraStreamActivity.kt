@@ -29,22 +29,11 @@ import java.io.IOException
 
 class BackgroundCameraStreamActivity : AppCompatActivity(), SurfaceHolder.Callback {
   private var service: CameraStreamService? = null
-//
-//  private val webRtcManager by lazy { WebRtcClient.instance }
-//
-//  private val agentClient = AgentClient()
-//
   private lateinit var sessionManager: SessionManager
-//  private lateinit var rtmpCamera: RtmpCamera2
-//
-//  private val folderRecord = File(Constants.DOC_DIR, "video_record")
-//
+
 //  private var isFlipped = false
 //
   private var token: String = ""
-//  private var flagRecording = false
-//  private var fileRecording: String = ""
-//
   private val logService = LogService.getInstance()
 //
 //  private lateinit var vibrator: Vibrator
@@ -83,6 +72,13 @@ class BackgroundCameraStreamActivity : AppCompatActivity(), SurfaceHolder.Callba
     openglview.holder.addCallback(this)
 
     updateUIStream()
+  }
+
+  override fun onBackPressed() {
+    super.onBackPressed()
+    val intent = Intent(applicationContext, LoginActivity::class.java)
+    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+    startActivity(intent)
   }
 
   /**
@@ -209,7 +205,6 @@ class BackgroundCameraStreamActivity : AppCompatActivity(), SurfaceHolder.Callba
     logService.appendLog("call stop stream", CameraStreamActivity.TAG)
     try {
       service?.stopStream()
-//      callStopRecord()
     }catch (e: java.lang.Exception){
       Log.d(CameraStreamActivity.TAG, e.toString())
     }

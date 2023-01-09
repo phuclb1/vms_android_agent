@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit
 class AgentClient {
     private lateinit var instance: AgentService
     private lateinit var clientOkhttp: OkHttpClient
-    private var baseURL = ""//Constants.BASE_URL
+    private var baseURL = ""
 
     fun setUrl(ipServer: String){
         baseURL = "http://$ipServer:${Constants.API_PORT}"

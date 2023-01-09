@@ -11,12 +11,20 @@ import android.os.Build
 import android.os.IBinder
 import android.support.v4.app.NotificationCompat
 import android.util.Log
+import android.widget.Toast
 import com.pedro.rtplibrary.rtmp.RtmpCamera2
 import com.pedro.rtplibrary.view.OpenGlView
+import com.serenegiant.utils.UIThreadHelper.runOnUiThread
+import com.subzero.usbtest.Constants
 import com.subzero.usbtest.R
 import com.subzero.usbtest.activity.CameraStreamActivity
+import com.subzero.usbtest.api.AgentClient
 import com.subzero.usbtest.utils.LogService
+import com.subzero.usbtest.utils.SessionManager
 import net.ossrs.rtmp.ConnectCheckerRtmp
+import okhttp3.*
+import java.io.File
+import java.io.IOException
 
 class CameraStreamService : Service() {
     companion object {
@@ -27,8 +35,15 @@ class CameraStreamService : Service() {
         val observer = MutableLiveData<CameraStreamService?>()
     }
 
+    private lateinit var sessionManager: SessionManager
+    private val agentClient = AgentClient()
     private var rtmpCamera: RtmpCamera2? = null
     private val logService = LogService.getInstance()
+    private var token: String = ""
+    private var streamServerIP : String = ""
+    private var flagRecording = false
+    private var fileRecording: String = ""
+    private val folderRecord = File(Constants.DOC_DIR, "video_record")
 
     override fun onBind(p0: Intent?): IBinder? {
         return null
@@ -42,6 +57,10 @@ class CameraStreamService : Service() {
     override fun onCreate() {
         super.onCreate()
         Log.i(TAG, "$TAG create")
+
+        sessionManager = SessionManager(this)
+        streamServerIP = sessionManager.fetchServerIp().toString()
+
         notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(channelId, channelId, NotificationManager.IMPORTANCE_HIGH)
@@ -57,7 +76,7 @@ class CameraStreamService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         Log.i(TAG, "RTP service destroy")
-        stopRecord()
+        callStopRecord()
         stopStream()
         stopPreview()
         observer.postValue(null)
@@ -115,21 +134,14 @@ class CameraStreamService : Service() {
     fun isOnPreview(): Boolean = rtmpCamera?.isOnPreview ?: false
 
     fun startStream(endpoint: String) {
-        rtmpCamera?.startStream(endpoint)
+        if(!isStreaming()) {
+            rtmpCamera?.startStream(endpoint)
+        }
     }
 
     fun stopStream() {
         rtmpCamera?.stopStream()
-    }
-
-    fun startRecord(path: String) {
-        rtmpCamera?.startRecord(path) {
-            Log.i(TAG, "record state: ${it.name}")
-        }
-    }
-
-    fun stopRecord() {
-        rtmpCamera?.stopRecord()
+        callStopRecord()
     }
 
     fun setView(openGlView: OpenGlView) {
@@ -145,16 +157,27 @@ class CameraStreamService : Service() {
         override fun onConnectionSuccessRtmp() {
             showNotification("Stream started")
             logService.appendLog("connect rtmp success", TAG)
+            callStopRecord()
         }
 
         override fun onConnectionFailedRtmp(reason: String) {
             showNotification("Stream connection failed")
             logService.appendLog("connect rtmp fail", TAG)
 
-            if(rtmpCamera?.shouldRetry(reason) == true){
+            logService.appendLog("connect rtmp fail", TAG)
+            if(!rtmpCamera?.isRecording!!){
+                val currentTimestamp = System.currentTimeMillis()
+                val fileRecord = "$folderRecord/$currentTimestamp.mp4"
+                val record = callStartRecord(fileRecord)
+                if(record){
+                    fileRecording = fileRecord
+                }
+            }
+
+            if(rtmpCamera!!.shouldRetry(reason)){
                 rtmpCamera!!.reConnect(1000)
             }else{
-                rtmpCamera?.setReTries(1000)
+                rtmpCamera!!.setReTries(1000)
             }
         }
 
@@ -165,6 +188,8 @@ class CameraStreamService : Service() {
         override fun onDisconnectRtmp() {
             showNotification("Stream stopped")
             stopStream()
+
+//            updateUIStream()
         }
 
         override fun onAuthErrorRtmp() {
@@ -174,5 +199,70 @@ class CameraStreamService : Service() {
         override fun onAuthSuccessRtmp() {
             showNotification("Stream auth success")
         }
+    }
+
+    /**
+     * Record Start/Stop
+     */
+    private fun callStartRecord(url: String):Boolean{
+        logService.appendLog("call start record", TAG)
+        if(rtmpCamera?.isStreaming == true && !rtmpCamera?.isRecording!! && !flagRecording){
+            flagRecording = true
+            try{
+                logService.appendLog("started record: $url", TAG)
+                try {
+                    rtmpCamera!!.startRecord(url)
+                    return true
+                }catch (e: IOException){
+                    flagRecording = false
+                }
+            }
+            catch (e: java.lang.Exception){
+                flagRecording = false
+                logService.appendLog("record error: ${e.message}", TAG)
+                Toast.makeText(this, "record exception: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+        return false
+    }
+
+    private fun callStopRecord(){
+        if(rtmpCamera?.isRecording == true){
+            rtmpCamera?.stopRecord()
+            flagRecording = false
+            uploadVideo(File(fileRecording))
+        }
+    }
+
+    private fun uploadVideo(file: File){
+        logService.appendLog("======== upload video ${file.absolutePath}    ${file.name}", TAG)
+        val mediaType = MediaType.parse("text/plain")
+        val requestBody = RequestBody.create(MediaType.parse("application/octet-stream"), file)
+        val body = MultipartBody
+            .Builder()
+            .setType(MultipartBody.FORM)
+            .addFormDataPart("video_file", file.name, requestBody)
+            .build()
+        val request = Request.Builder()
+            .url("http://$streamServerIP${Constants.API_UPLOAD_VIDEO}")
+            .method("POST", body)
+            .addHeader("Authorization", "Bearer $token")
+            .build()
+        agentClient.getClientOkhttpInstance().newCall(request).enqueue(object: okhttp3.Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                logService.appendLog("upload video failed: ${e.message.toString()}", TAG
+                )
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                val responseData = response.body().toString()
+                logService.appendLog("upload video success: ${file.name}", TAG)
+
+                if(file.exists()){
+                    file.delete()
+                }
+            }
+
+        })
     }
 }
