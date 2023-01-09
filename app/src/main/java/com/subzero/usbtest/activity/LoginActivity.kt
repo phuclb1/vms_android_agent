@@ -7,6 +7,8 @@ import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.support.v7.app.AppCompatActivity
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.View
 import android.widget.Toast
 import com.subzero.usbtest.Constants
@@ -41,7 +43,6 @@ class LoginActivity : AppCompatActivity() {
             dir.mkdirs()
         }
 
-        agentClient.get_instance()
         sessionManager = SessionManager(this)
 
         intent_activity = if(Constants.IS_DEFAULT_USB_CAMERA)
@@ -51,6 +52,7 @@ class LoginActivity : AppCompatActivity() {
 
         et_username.setText("vsmart")
         et_password?.setText("123456aA@")
+        et_ip_stream_server.setText(sessionManager.fetchServerIp())
         tv_error_info.visibility = View.GONE
 
         bt_login.setOnClickListener {
@@ -80,8 +82,14 @@ class LoginActivity : AppCompatActivity() {
             et_password.requestFocus()
             return true
         }
+        if(et_ip_stream_server.text.isNullOrBlank()){
+            displayLoginErrorInfo(2)
+            et_ip_stream_server.requestFocus()
+            return true
+        }
 
-        agentClient.get_instance().login(
+        agentClient.setUrl(et_ip_stream_server.text.toString())
+        agentClient.create().login(
             LoginRequest(account = et_username.text.toString().trim(),
                 password = et_password.text.toString().trim()
             )
@@ -100,8 +108,12 @@ class LoginActivity : AppCompatActivity() {
                     }else{
                         val authToken = loginResponse?.authToken.toString()
                         sessionManager.saveAuthToken(authToken)
+                        val serverIp = et_ip_stream_server.text
+                        sessionManager.saveServerIp(serverIp.toString())
+
                         intent_activity.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                         startActivity(intent_activity)
+
                         logService.appendLog("Login success", TAG)
                     }
                 }
@@ -130,6 +142,10 @@ class LoginActivity : AppCompatActivity() {
                 }
                 1 -> {
                     tv_error_info.setText(R.string.lost_connect_err)
+                    tv_error_info.visibility = View.VISIBLE
+                }
+                2 -> {
+                    tv_error_info.setText(R.string.err_ip_stream_server_empty)
                     tv_error_info.visibility = View.VISIBLE
                 }
                 else -> {

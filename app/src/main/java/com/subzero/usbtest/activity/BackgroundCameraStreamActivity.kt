@@ -41,11 +41,11 @@ class BackgroundCameraStreamActivity : AppCompatActivity(), SurfaceHolder.Callba
 //
 //  private var isFlipped = false
 //
-//  private var token: String = ""
+  private var token: String = ""
 //  private var flagRecording = false
 //  private var fileRecording: String = ""
 //
-//  private val logService = LogService.getInstance()
+  private val logService = LogService.getInstance()
 //
 //  private lateinit var vibrator: Vibrator
 
@@ -58,29 +58,64 @@ class BackgroundCameraStreamActivity : AppCompatActivity(), SurfaceHolder.Callba
     val logDir = Environment.DIRECTORY_DCIM
     Thread.setDefaultUncaughtExceptionHandler(CustomizedExceptionHandler(logDir))
 
+    if (!hasPermissions()) {
+      ActivityCompat.requestPermissions(this, Constants.CAMERA_REQUIRED_PERMISSIONS, 1)
+    }
+
+    /* Service observer */
     CameraStreamService.observer.observe(this) {
       service = it
       startPreview()
     }
 
-    if(service == null){
-      Log.e(TAG, "----- service is null")
+    layout_no_camera_found.visibility = View.GONE
+
+    sessionManager = SessionManager(this)
+    token = sessionManager.fetchAuthToken().toString()
+    var rtmpUrl = "rtmp://${sessionManager.fetchServerIp().toString()}:${Constants.RTMP_PORT}/live/$token"
+    logService.appendLog("RTMP url: $rtmpUrl", CameraStreamActivity.TAG)
+    et_url.setText(rtmpUrl)
+
+    start_stop.setOnClickListener {
+      onButtonStreamClick()
     }
 
-    var url_rtmp = "rtmp://103.160.84.179:21935/live/livestream"
-    start_stop.setOnClickListener {
-      if (service?.isStreaming() != true) {
-        if (service?.prepare() == true) {
-          service?.startStream(url_rtmp)
-          start_stop.setText("Stop")
+    openglview.holder.addCallback(this)
+
+    updateUIStream()
+  }
+
+  /**
+   * Option Menu
+   */
+  override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+    menuInflater.inflate(R.menu.menu_toolbar, menu)
+    return true
+  }
+
+  override fun onOptionsItemSelected(item: MenuItem): Boolean {
+    if (item != null) {
+      when(item.itemId){
+        R.id.menu_setting -> {}
+        R.id.menu_about -> {}
+        R.id.menu_phone_cam -> {
+          val intent_activity = Intent(applicationContext, CameraStreamActivity::class.java)
+          intent_activity.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+          startActivity(intent_activity)
         }
-      } else {
-        service?.stopStream()
-        start_stop.setText("Start")
+        R.id.menu_usb_cam -> {
+          val intent_activity = Intent(applicationContext, USBStreamActivity::class.java)
+          intent_activity.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+          startActivity(intent_activity)
+        }
       }
     }
-    openglview.holder.addCallback(this)
+    return super.onOptionsItemSelected(item)
   }
+
+  /**
+   * Surface event
+   */
   override fun surfaceChanged(holder: SurfaceHolder, p1: Int, p2: Int, p3: Int) {
     startPreview()
   }
@@ -100,11 +135,7 @@ class BackgroundCameraStreamActivity : AppCompatActivity(), SurfaceHolder.Callba
       val intent = Intent(applicationContext, CameraStreamService::class.java)
       startService(intent)
     }
-    if (service?.isStreaming() == true) {
-      start_stop.setText("Stop")
-    } else {
-      start_stop.setText("Start")
-    }
+    updateUIStream()
   }
 
   override fun onPause() {
@@ -143,6 +174,80 @@ class BackgroundCameraStreamActivity : AppCompatActivity(), SurfaceHolder.Callba
     else{
       Log.e(TAG, "start preview fail 2")
     }
+  }
+
+  /**
+   * Button event
+   */
+
+  private fun onButtonStreamClick(){
+    if (!service?.isStreaming()!!) {
+      callStartStream(et_url.text.toString())
+    } else {
+      callStopStream()
+    }
+    updateUIStream()
+  }
+
+  /**
+   * RTMP Stream Start/Stop
+   */
+  private fun callStartStream(url: String) {
+    logService.appendLog("call start stream", CameraStreamActivity.TAG)
+    try {
+      if (!service?.isStreaming()!!) {
+        if (prepareEncoders() == true) {
+          service!!.startStream(url)
+        }
+      }
+    }catch (e: java.lang.Exception){
+      Log.d(CameraStreamActivity.TAG, e.toString())
+    }
+  }
+
+  private fun callStopStream() {
+    logService.appendLog("call stop stream", CameraStreamActivity.TAG)
+    try {
+      service?.stopStream()
+//      callStopRecord()
+    }catch (e: java.lang.Exception){
+      Log.d(CameraStreamActivity.TAG, e.toString())
+    }
+  }
+
+  private fun prepareEncoders(): Boolean? {
+    return service?.prepare()
+  }
+
+  /**
+   * Update UI
+   */
+  private fun updateUIStream(){
+    runOnUiThread {
+      if (service?.isStreaming() == true) {
+        start_stop.background = getDrawable(R.drawable.custom_oval_button_2)
+        start_stop.text = getString(R.string.stop)
+        rotate_btn.visibility = View.INVISIBLE
+        flip_btn.visibility = View.INVISIBLE
+      } else {
+        start_stop.background = getDrawable(R.drawable.custom_oval_button_1)
+        start_stop.text = getString(R.string.start)
+        rotate_btn.visibility = View.VISIBLE
+        flip_btn.visibility = View.VISIBLE
+      }
+    }
+  }
+
+  /**
+   * Check permission
+   */
+  private fun hasPermissions(): Boolean {
+    for (permission in Constants.CAMERA_REQUIRED_PERMISSIONS) {
+      if (PackageManager.PERMISSION_GRANTED != ActivityCompat.checkSelfPermission(this, permission)) {
+        return false
+      }
+    }
+    return true
   }
 
   companion object{

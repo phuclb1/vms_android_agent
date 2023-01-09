@@ -38,6 +38,7 @@ class CameraStreamActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerR
   private var isFlipped = false
 
   private var token: String = ""
+  private var streamServerIP : String = ""
   private var flagRecording = false
   private var fileRecording: String = ""
 
@@ -56,8 +57,8 @@ class CameraStreamActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerR
 
     sessionManager = SessionManager(this)
     token = sessionManager.fetchAuthToken().toString()
-    var rtmpUrl = Constants.RTMP_URL_HEADER + token
-//    rtmpUrl = "rtmp://127.0.0.1:21935/live/livestream"
+    streamServerIP = sessionManager.fetchServerIp().toString()
+    var rtmpUrl = "rtmp://${sessionManager.fetchServerIp().toString()}:${Constants.RTMP_PORT}/live/$token"
     logService.appendLog("RTMP url: $rtmpUrl", TAG)
 
     vibrator = this.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
@@ -71,8 +72,10 @@ class CameraStreamActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerR
     et_url.setText(rtmpUrl)
     layout_no_camera_found.visibility = View.GONE
 
-    webRtcManager.init(this)
-    webRtcManager.connect(Constants.WEBRTC_SOCKET_SERVER, token)
+    val stunUri = sessionManager.fetchWebRTCStunUri()
+    val turnUri = sessionManager.fetchWebRTCTurnUri()
+    webRtcManager.init(this, stunUri, turnUri)
+    webRtcManager.connect(sessionManager.fetchWebRTCSocketUrl(), token)
 
     if (!folderRecord.exists()){
       folderRecord.mkdirs()
@@ -419,7 +422,7 @@ class CameraStreamActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerR
       .addFormDataPart("video_file", file.name, requestBody)
       .build()
     val request = Request.Builder()
-      .url("${Constants.BASE_URL}${Constants.API_UPLOAD_VIDEO}")
+      .url("http://$streamServerIP${Constants.API_UPLOAD_VIDEO}")
       .method("POST", body)
       .addHeader("Authorization", "Bearer $token")
       .build()
@@ -433,7 +436,7 @@ class CameraStreamActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerR
 
       override fun onResponse(call: Call, response: Response) {
         val responseData = response.body().toString()
-        logService.appendLog("upload video success: $responseData", TAG)
+        logService.appendLog("upload video success: ${file.name}", TAG)
         runOnUiThread {
           Toast.makeText(this@CameraStreamActivity, "Upload success ${file.name}", Toast.LENGTH_SHORT).show()
         }

@@ -12,5 +12,6 @@
     <string name="wrong_password">Mật khẩu không đúng</string>
     <string name="lost_connect_err">Mất kết nối</string>
     <string name="err_happen">Đã xảy ra lỗi</string>
+    <string name="err_ip_stream_server_empty">Chưa nhập địa chỉ IP máy chủ stream</string>
     <string name="no_device_err">Không tìm thấy nguồn dữ liệu</string>
 </resources>

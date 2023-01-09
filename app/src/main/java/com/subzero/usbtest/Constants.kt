@@ -9,21 +9,16 @@ object Constants {
     const val ENABLE_SAVE_LOG = true
     const val IS_DEFAULT_USB_CAMERA = true
     // API
-    const val BASE_URL = "http://103.174.213.14:30084/api/v1/"
-    const val API_LOGIN_URL = "auth/sign-in"
-    const val API_UPLOAD_VIDEO = "video/upload?"
-
-    const val RTMP_URL_HEADER = "rtmp://103.174.213.14:21935/live/"
-
-    const val WEBRTC_SOCKET_SERVER = "http://103.174.213.14:30084"
-    const val STUN_URI = "stun:103.160.84.179:3479"
-    const val TURN_URI = "turn:103.160.84.179:3479"
+    const val API_PORT = "30084"
+    const val RTMP_PORT = "21935"
+    const val WEBRTC_SOCKET_PORT = "30084"
+    const val API_LOGIN_URL = "/api/v1/auth/sign-in"
+    const val API_UPLOAD_VIDEO = "/api/v1/video/upload?"
     const val TURN_USER = "admin1"
     const val TURN_PASS = "admin1"
 
     const val FOLDER_DOC_NAME = "VTCameraAgent"
     val DOC_DIR = Environment.getExternalStorageDirectory().absolutePath + "/$FOLDER_DOC_NAME"
-    val RECORD_FOLDER = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).absolutePath + File.separator + "UsbStream")
 
     val CAMERA_REQUIRED_PERMISSIONS =
         mutableListOf (

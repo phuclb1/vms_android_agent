@@ -10,7 +10,11 @@ import java.util.concurrent.TimeUnit
 class AgentClient {
     private lateinit var instance: AgentService
     private lateinit var clientOkhttp: OkHttpClient
-    private var baseURL = Constants.BASE_URL
+    private var baseURL = ""//Constants.BASE_URL
+
+    fun setUrl(ipServer: String){
+        baseURL = "http://$ipServer:${Constants.API_PORT}"
+    }
 
     fun getClientOkhttpInstance(): OkHttpClient{
         if(!::clientOkhttp.isInitialized){
@@ -23,18 +27,24 @@ class AgentClient {
         return clientOkhttp
     }
 
-    fun get_instance(): AgentService {
+    fun getInstance(): AgentService {
         // Initialize ApiService if not initialized yet
         if (!::instance.isInitialized) {
-            val client = getClientOkhttpInstance()
-            val retrofit = Retrofit.Builder()
-                .baseUrl(baseURL)
-                .addConverterFactory(GsonConverterFactory.create())
-                .client(client)
-                .build()
-
-            instance = retrofit.create(AgentService::class.java)
+            create()
         }
+
+        return instance
+    }
+
+    fun create(): AgentService {
+        val client = getClientOkhttpInstance()
+        val retrofit = Retrofit.Builder()
+            .baseUrl(baseURL)
+            .addConverterFactory(GsonConverterFactory.create())
+            .client(client)
+            .build()
+
+        instance = retrofit.create(AgentService::class.java)
 
         return instance
     }

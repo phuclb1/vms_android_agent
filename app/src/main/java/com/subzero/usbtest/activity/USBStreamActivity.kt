@@ -48,6 +48,7 @@ class USBStreamActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp
   private var isFlipped = false
 
   private var token: String = ""
+  private var streamServerIP : String = ""
   private var flagRecording = false
   private var fileRecording: String = ""
 
@@ -66,7 +67,8 @@ class USBStreamActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp
 
     sessionManager = SessionManager(this)
     token = sessionManager.fetchAuthToken().toString()
-    var rtmpUrl = Constants.RTMP_URL_HEADER + token
+    streamServerIP = sessionManager.fetchServerIp().toString()
+    var rtmpUrl = "rtmp://${sessionManager.fetchServerIp().toString()}:${Constants.RTMP_PORT}/live/$token"
 //    rtmpUrl = "rtmp://103.160.84.179:21935/live/livestream"
 
     vibrator = this.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
@@ -84,8 +86,10 @@ class USBStreamActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp
     usbMonitor.register()
     rtmpUSB.setNumRetriesConnect(1000)
 
-    webRtcManager.init(this)
-    webRtcManager.connect(Constants.WEBRTC_SOCKET_SERVER, token)
+    val stunUri = sessionManager.fetchWebRTCStunUri()
+    val turnUri = sessionManager.fetchWebRTCTurnUri()
+    webRtcManager.init(this, stunUri, turnUri)
+    webRtcManager.connect(sessionManager.fetchWebRTCSocketUrl(), token)
 
     if (!folderRecord.exists()){
       folderRecord.mkdirs()
@@ -495,7 +499,7 @@ class USBStreamActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp
       .addFormDataPart("video_file", file.name, requestBody)
       .build()
     val request = Request.Builder()
-      .url("${Constants.BASE_URL}${Constants.API_UPLOAD_VIDEO}")
+      .url("http://$streamServerIP${Constants.API_UPLOAD_VIDEO}")
       .method("POST", body)
       .addHeader("Authorization", "Bearer $token")
       .build()

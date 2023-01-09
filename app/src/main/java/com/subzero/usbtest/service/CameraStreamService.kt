@@ -11,10 +11,11 @@ import android.os.Build
 import android.os.IBinder
 import android.support.v4.app.NotificationCompat
 import android.util.Log
-import com.pedro.rtplibrary.base.Camera2Base
 import com.pedro.rtplibrary.rtmp.RtmpCamera2
 import com.pedro.rtplibrary.view.OpenGlView
 import com.subzero.usbtest.R
+import com.subzero.usbtest.activity.CameraStreamActivity
+import com.subzero.usbtest.utils.LogService
 import net.ossrs.rtmp.ConnectCheckerRtmp
 
 class CameraStreamService : Service() {
@@ -26,7 +27,8 @@ class CameraStreamService : Service() {
         val observer = MutableLiveData<CameraStreamService?>()
     }
 
-    private var camera2Base: Camera2Base? = null
+    private var rtmpCamera: RtmpCamera2? = null
+    private val logService = LogService.getInstance()
 
     override fun onBind(p0: Intent?): IBinder? {
         return null
@@ -46,7 +48,9 @@ class CameraStreamService : Service() {
             notificationManager?.createNotificationChannel(channel)
         }
         keepAliveTrick()
-        camera2Base = RtmpCamera2(this, true, connectCheckerRtp)
+        rtmpCamera = RtmpCamera2(this, true, connectCheckerRtp)
+        rtmpCamera!!.setReTries(1000)
+
         observer.postValue(this)
     }
 
@@ -80,64 +84,78 @@ class CameraStreamService : Service() {
     }
 
     fun prepare(): Boolean {
-        return camera2Base?.prepareVideo() ?: false && camera2Base?.prepareAudio() ?: false
+        return rtmpCamera?.prepareVideo() ?: false && rtmpCamera?.prepareAudio() ?: false
+    }
+
+    fun prepareVideo(width: Int, height: Int, bitrate: Int): Boolean{
+        return rtmpCamera?.prepareVideo(width, height, bitrate) ?: false
+    }
+
+    fun prepareAudio(bitrate: Int, sampleRate: Int, isStereo: Boolean): Boolean{
+        return rtmpCamera?.prepareAudio(bitrate, sampleRate, isStereo) ?: false
     }
 
     fun startPreview() {
         Log.d(TAG, "--------- start preview")
-        camera2Base?.startPreview()
+        rtmpCamera?.startPreview()
     }
 
     fun stopPreview() {
-        camera2Base?.stopPreview()
+        rtmpCamera?.stopPreview()
     }
 
     fun switchCamera() {
-        camera2Base?.switchCamera()
+        rtmpCamera?.switchCamera()
     }
 
-    fun isStreaming(): Boolean = camera2Base?.isStreaming ?: false
+    fun isStreaming(): Boolean = rtmpCamera?.isStreaming ?: false
 
-    fun isRecording(): Boolean = camera2Base?.isRecording ?: false
+    fun isRecording(): Boolean = rtmpCamera?.isRecording ?: false
 
-    fun isOnPreview(): Boolean = camera2Base?.isOnPreview ?: false
+    fun isOnPreview(): Boolean = rtmpCamera?.isOnPreview ?: false
 
     fun startStream(endpoint: String) {
-        camera2Base?.startStream(endpoint)
+        rtmpCamera?.startStream(endpoint)
     }
 
     fun stopStream() {
-        camera2Base?.stopStream()
+        rtmpCamera?.stopStream()
     }
 
     fun startRecord(path: String) {
-        camera2Base?.startRecord(path) {
+        rtmpCamera?.startRecord(path) {
             Log.i(TAG, "record state: ${it.name}")
         }
     }
 
     fun stopRecord() {
-        camera2Base?.stopRecord()
+        rtmpCamera?.stopRecord()
     }
 
     fun setView(openGlView: OpenGlView) {
-        camera2Base?.replaceView(openGlView)
+        rtmpCamera?.replaceView(openGlView)
     }
 
     fun setView(context: Context) {
-        camera2Base?.replaceView(context)
+        rtmpCamera?.replaceView(context)
     }
 
     private val connectCheckerRtp = object : ConnectCheckerRtmp {
 
         override fun onConnectionSuccessRtmp() {
             showNotification("Stream started")
-            Log.e(TAG, "RTP service destroy")
+            logService.appendLog("connect rtmp success", TAG)
         }
 
         override fun onConnectionFailedRtmp(reason: String) {
             showNotification("Stream connection failed")
-            Log.e(TAG, "RTP service destroy")
+            logService.appendLog("connect rtmp fail", TAG)
+
+            if(rtmpCamera?.shouldRetry(reason) == true){
+                rtmpCamera!!.reConnect(1000)
+            }else{
+                rtmpCamera?.setReTries(1000)
+            }
         }
 
         override fun onNewBitrateRtmp(bitrate: Long) {
@@ -146,6 +164,7 @@ class CameraStreamService : Service() {
 
         override fun onDisconnectRtmp() {
             showNotification("Stream stopped")
+            stopStream()
         }
 
         override fun onAuthErrorRtmp() {

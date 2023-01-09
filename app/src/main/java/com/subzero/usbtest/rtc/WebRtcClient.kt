@@ -213,14 +213,16 @@ class WebRtcClient private constructor() {
      *
      */
     fun init(
-        context: Context
+        context: Context,
+        stunUri: String,
+        turnUri: String
     ) {
         this.context = context
 //        iceServers.add(PeerConnection.IceServer.builder("stun:23.21.150.121").createIceServer())
 //        iceServers.add(PeerConnection.IceServer.builder("stun:stun.l.google.com:19302").createIceServer())
-        iceServers.add(PeerConnection.IceServer.builder(Constants.STUN_URI)
+        iceServers.add(PeerConnection.IceServer.builder(stunUri)
             .createIceServer())
-        iceServers.add(PeerConnection.IceServer.builder(Constants.TURN_URI)
+        iceServers.add(PeerConnection.IceServer.builder(turnUri)
             .setUsername(Constants.TURN_USER)
             .setPassword(Constants.TURN_PASS)
             .createIceServer())
