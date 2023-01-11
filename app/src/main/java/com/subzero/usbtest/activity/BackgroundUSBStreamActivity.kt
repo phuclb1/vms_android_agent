@@ -99,14 +99,22 @@ class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
 
   private fun onButtonStreamClick(){
     if (isMyServiceRunning(USBStreamService::class.java)) {
-      stopService(Intent(applicationContext, USBStreamService::class.java))
-      updateUIStream(false)
+      stopService()
     } else {
-      val intent = Intent(applicationContext, USBStreamService::class.java)
-      intent.putExtra("endpoint", et_url.text.toString())
-      startService(intent)
-      updateUIStream(true)
+      startService()
     }
+  }
+
+  private fun stopService(){
+    stopService(Intent(applicationContext, USBStreamService::class.java))
+    updateUIStream(false)
+  }
+
+  private fun startService(){
+    val intent = Intent(applicationContext, USBStreamService::class.java)
+    intent.putExtra("endpoint", et_url.text.toString())
+    startService(intent)
+    updateUIStream(true)
   }
 
   /**
@@ -208,7 +216,8 @@ class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
         return
       }
 
-      if(!USBStreamService.isUVCCameraAvailable()) {
+      if(!USBStreamService.isUVCCameraAvailable())
+      {
         val camera = UVCCamera()
         logService.appendLog("onDeviceConectListener ---- ${ctrlBlock.toString()}", TAG)
         camera.open(ctrlBlock)
@@ -244,19 +253,18 @@ class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
     override fun onDisconnect(device: UsbDevice?, ctrlBlock: USBMonitor.UsbControlBlock?) {
       logService.appendLog("MainActivity onDisconnect", TAG)
       layout_no_camera_found.visibility = View.VISIBLE
-//      if (uvcCamera != null) {
-        updateUIStream(false)
-//        callStopStream()
+      updateUIStream(false)
+      stopService()
 
-        USBStreamService.closeUVCCamera()
-        isUsbOpen = false
-//      }
+      USBStreamService.closeUVCCamera()
+      isUsbOpen = false
     }
 
     override fun onDettach(device: UsbDevice?) {
       logService.appendLog("MainActivity onDetach", TAG)
       USBStreamService.closeUVCCamera()
       isUsbOpen = false
+      stopService()
     }
 
     override fun onCancel(device: UsbDevice?) {
