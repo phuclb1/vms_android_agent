@@ -161,6 +161,16 @@ class CameraStreamActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerR
           intent_activity.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
           startActivity(intent_activity)
         }
+        R.id.menu_background_phone_cam -> {
+          val intent_activity = Intent(applicationContext, BackgroundCameraStreamActivity::class.java)
+          intent_activity.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+          startActivity(intent_activity)
+        }
+        R.id.menu_background_usb_cam -> {
+          val intent_activity = Intent(applicationContext, BackgroundUSBStreamActivity::class.java)
+          intent_activity.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+          startActivity(intent_activity)
+        }
       }
     }
     return super.onOptionsItemSelected(item)

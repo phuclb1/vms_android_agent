@@ -1,20 +1,25 @@
 package com.subzero.usbtest.activity
 
+import android.app.Activity
 import android.app.ActivityManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.hardware.usb.UsbDevice
 import android.os.*
 import android.support.v4.app.ActivityCompat
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.*
 import android.view.View.OnClickListener
+import android.widget.Toast
+import com.serenegiant.usb.USBMonitor
+import com.serenegiant.usb.UVCCamera
 import com.serenegiant.utils.UIThreadHelper
 import com.subzero.usbtest.Constants
 import com.subzero.usbtest.R
 import com.subzero.usbtest.rtc.WebRtcClient
-import com.subzero.usbtest.service.CameraStreamService
+import com.subzero.usbtest.service.USBStreamService
 import com.subzero.usbtest.utils.CustomizedExceptionHandler
 import com.subzero.usbtest.utils.LogService
 import com.subzero.usbtest.utils.SessionManager
@@ -22,12 +27,16 @@ import kotlinx.android.synthetic.main.activity_main.*
 import okhttp3.*
 import org.webrtc.PeerConnection
 
-class BackgroundCameraStreamActivity : AppCompatActivity(), SurfaceHolder.Callback {
-  private var service: CameraStreamService? = null
+class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
   private lateinit var sessionManager: SessionManager
 
   private var token: String = ""
   private val logService = LogService.getInstance()
+
+  private lateinit var usbMonitor: USBMonitor
+  private val width = 1280
+  private val height = 720
+  private var isUsbOpen = false
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -42,47 +51,30 @@ class BackgroundCameraStreamActivity : AppCompatActivity(), SurfaceHolder.Callba
       ActivityCompat.requestPermissions(this, Constants.CAMERA_REQUIRED_PERMISSIONS, 1)
     }
 
-    /* Service observer */
-    CameraStreamService.observer.observe(this) {
-      service = it
-      startPreview()
-    }
+    usbMonitor = USBMonitor(this, onDeviceConnectListener)
+    usbMonitor.register()
+
+    USBStreamService.init(this, openglview)
 
     layout_no_camera_found.visibility = View.GONE
+
+    openglview.holder.addCallback(this)
 
     sessionManager = SessionManager(this)
     token = sessionManager.fetchAuthToken().toString()
     var rtmpUrl = "rtmp://${sessionManager.fetchServerIp().toString()}:${Constants.RTMP_PORT}/live/$token"
-    logService.appendLog("RTMP url: $rtmpUrl", TAG)
+    rtmpUrl = "rtmp://103.160.84.179:21935/live/livestream"
+    logService.appendLog("RTMP url: $rtmpUrl", BackgroundCameraStreamActivity.TAG)
     et_url.setText(rtmpUrl)
 
     setButtonClickListener()
 
-    openglview.holder.addCallback(this)
+    updateUIStream(USBStreamService.isStreaming())
+  }
 
-    updateUIStream()
-
-//    service?.onIceConnectionChangeCallback = fun(state){
-//      runOnUiThread {
-//        if (state == PeerConnection.IceConnectionState.CONNECTED) {
-//          layout_calling.visibility = View.INVISIBLE
-//        }
-//        if (state == PeerConnection.IceConnectionState.CLOSED) {
-//          layout_calling.visibility = View.GONE
-//        }
-//      }
-//    }
-//    service?.onCallingCallback = fun(){
-//      Log.d(TAG, "========== activity: oncalling")
-//      runOnUiThread {
-//        layout_calling.visibility = View.VISIBLE
-//      }
-//    }
-//    service?.onCallLeaveCallback = fun(){
-//        runOnUiThread {
-//          end_call_btn.visibility = View.GONE
-//        }
-//    }
+  override fun onDestroy() {
+    super.onDestroy()
+    usbMonitor.unregister()
   }
 
   override fun onBackPressed() {
@@ -90,6 +82,7 @@ class BackgroundCameraStreamActivity : AppCompatActivity(), SurfaceHolder.Callba
     val intent = Intent(applicationContext, LoginActivity::class.java)
     intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
     startActivity(intent)
+    stopService(Intent(applicationContext, USBStreamService::class.java))
   }
 
   private fun setButtonClickListener(){
@@ -100,25 +93,28 @@ class BackgroundCameraStreamActivity : AppCompatActivity(), SurfaceHolder.Callba
   }
 
   /**
-   * Calling phone
+   * Button event
    */
-//  private fun onDeclineCall(){
-//    service?.onDeclineCall()
-//  }
-//
-//  private fun onAcceptCall(){
-//    service?.onAcceptCall()
-//    runOnUiThread {
-//      end_call_btn.visibility = View.VISIBLE
+
+  private fun onButtonStreamClick(){
+    if (isMyServiceRunning(USBStreamService::class.java)) {
+      stopService(Intent(applicationContext, USBStreamService::class.java))
+      updateUIStream(false)
+//      b_start_stop.setText(R.string.start_button)
+    } else {
+      val intent = Intent(applicationContext, USBStreamService::class.java)
+      intent.putExtra("endpoint", et_url.text.toString())
+      startService(intent)
+      updateUIStream(true)
+//      b_start_stop.setText(R.string.stop_button)
+    }
+//    if (!USBStreamService.isStreaming()!!) {
+//      callStartStream(et_url.text.toString())
+//    } else {
+//      callStopStream()
 //    }
-//  }
-//
-//  private fun onEndCall(){
-//    service?.onEndCall()
-//    runOnUiThread {
-//      end_call_btn.visibility = View.GONE
-//    }
-//  }
+//    updateUIStream()
+  }
 
   /**
    * Option Menu
@@ -162,12 +158,13 @@ class BackgroundCameraStreamActivity : AppCompatActivity(), SurfaceHolder.Callba
    * Surface event
    */
   override fun surfaceChanged(holder: SurfaceHolder, p1: Int, p2: Int, p3: Int) {
-    startPreview()
+    USBStreamService.setView(openglview)
+//    USBStreamService.startPreview()
   }
 
   override fun surfaceDestroyed(holder: SurfaceHolder) {
-    service?.setView(this)
-    if (service?.isOnPreview() == true) service?.stopPreview()
+    USBStreamService.setView(applicationContext)
+    USBStreamService.stopPreview()
   }
 
   override fun surfaceCreated(holder: SurfaceHolder) {
@@ -176,21 +173,10 @@ class BackgroundCameraStreamActivity : AppCompatActivity(), SurfaceHolder.Callba
 
   override fun onResume() {
     super.onResume()
-    if (!isMyServiceRunning(CameraStreamService::class.java)) {
-      val intent = Intent(applicationContext, CameraStreamService::class.java)
-      startService(intent)
-    }
-    updateUIStream()
-  }
-
-  override fun onPause() {
-    super.onPause()
-    if (!isChangingConfigurations) { //stop if no rotation activity
-      if (service?.isOnPreview() == true) service?.stopPreview()
-      if (service?.isStreaming() != true) {
-        service = null
-        stopService(Intent(applicationContext, CameraStreamService::class.java))
-      }
+    if (isMyServiceRunning(USBStreamService::class.java)) {
+      updateUIStream(USBStreamService.isStreaming())
+    } else {
+      updateUIStream(false)
     }
   }
 
@@ -205,80 +191,82 @@ class BackgroundCameraStreamActivity : AppCompatActivity(), SurfaceHolder.Callba
     return false
   }
 
-  private fun startPreview() {
-    if (openglview.holder.surface.isValid) {
-      service?.setView(openglview)
-    }
-    else{
-      Log.e(TAG, "start preview fail")
-    }
-    //check if onPreview and if surface is valid
-    if (service?.isOnPreview() != true && openglview.holder.surface.isValid) {
-      service?.startPreview()
-    }
-    else{
-      Log.e(TAG, "start preview fail 2")
-    }
-  }
-
   /**
-   * Button event
+   * USB Monitor
    */
-
-  private fun onButtonStreamClick(){
-    if (!service?.isStreaming()!!) {
-      callStartStream(et_url.text.toString())
-    } else {
-      callStopStream()
+  private val onDeviceConnectListener = object : USBMonitor.OnDeviceConnectListener {
+    override fun onAttach(device: UsbDevice?) {
+      logService.appendLog("onDeviceConnectListener ---- onAttach", TAG)
+      if (device != null) {
+//        layout_no_camera_found.visibility = View.INVISIBLE
+        usbMonitor.requestPermission(device)
+      }
     }
-    updateUIStream()
-  }
 
-  /**
-   * RTMP Stream Start/Stop
-   */
-  private fun callStartStream(url: String) {
-    logService.appendLog("call start stream", TAG)
-    try {
-      if (!service?.isStreaming()!!) {
-        if (prepareEncoders() == true) {
-          service!!.startStream(url)
+    override fun onConnect(
+      device: UsbDevice?, ctrlBlock: USBMonitor.UsbControlBlock?,
+      createNew: Boolean
+    ) {
+      if (device != null) {
+        logService.appendLog("onDeviceConnectListener ---- ${device.deviceName}", TAG)
+      }else{
+        logService.appendLog("onDeviceConectListener ---- device null", TAG)
+//        layout_no_camera_found.visibility = View.VISIBLE
+        return
+      }
+
+      if(!USBStreamService.isUVCCameraAvailable()) {
+        val camera = UVCCamera()
+        logService.appendLog("onDeviceConectListener ---- ${ctrlBlock.toString()}", TAG)
+        camera.open(ctrlBlock)
+        try {
+          camera.setPreviewSize(width, height, UVCCamera.FRAME_FORMAT_MJPEG)
+        } catch (e: IllegalArgumentException) {
+          logService.appendLog(
+            "onDeviceConectListener --- setPreviewSize camera ---- ${e.toString()}",
+            TAG
+          )
+          camera.destroy()
+          try {
+            camera.setPreviewSize(width, height, UVCCamera.DEFAULT_PREVIEW_MODE)
+          } catch (e1: IllegalArgumentException) {
+            logService.appendLog(
+              "onDeviceConectListener --- setPreviewSize camera ---- ${e1.toString()}",
+              TAG
+            )
+            return
+          }
         }
+        USBStreamService.setView(openglview)
+        USBStreamService.setUVCCamera(camera)
+        USBStreamService.startPreview()
       }
-    }catch (e: java.lang.Exception){
-      Log.d(CameraStreamActivity.TAG, e.toString())
+
+      isUsbOpen = true
+      logService.appendLog("onDeviceConectListener --- success ", TAG)
+//      layout_no_camera_found.visibility = View.INVISIBLE
     }
-  }
 
-  private fun callStopStream() {
-    logService.appendLog("call stop stream", TAG)
-    try {
-      service?.stopStream()
-    }catch (e: java.lang.Exception){
-      Log.d(CameraStreamActivity.TAG, e.toString())
+    override fun onDisconnect(device: UsbDevice?, ctrlBlock: USBMonitor.UsbControlBlock?) {
+      logService.appendLog("MainActivity onDisconnect", TAG)
+//      layout_no_camera_found.visibility = View.VISIBLE
+//      if (uvcCamera != null) {
+        updateUIStream(false)
+//        callStopStream()
+
+        USBStreamService.closeUVCCamera()
+        isUsbOpen = false
+//      }
     }
-  }
 
-  private fun prepareEncoders(): Boolean? {
-    return service?.prepare()
-  }
+    override fun onDettach(device: UsbDevice?) {
+      logService.appendLog("MainActivity onDetach", TAG)
+      USBStreamService.closeUVCCamera()
+      isUsbOpen = false
+    }
 
-  /**
-   * Update UI
-   */
-  private fun updateUIStream(){
-    runOnUiThread {
-      if (service?.isStreaming() == true) {
-        start_stop.background = getDrawable(R.drawable.custom_oval_button_2)
-        start_stop.text = getString(R.string.stop)
-        rotate_btn.visibility = View.INVISIBLE
-        flip_btn.visibility = View.INVISIBLE
-      } else {
-        start_stop.background = getDrawable(R.drawable.custom_oval_button_1)
-        start_stop.text = getString(R.string.start)
-        rotate_btn.visibility = View.VISIBLE
-        flip_btn.visibility = View.VISIBLE
-      }
+    override fun onCancel(device: UsbDevice?) {
+      logService.appendLog("MainActivity onCancel", TAG)
     }
   }
 
@@ -294,9 +282,28 @@ class BackgroundCameraStreamActivity : AppCompatActivity(), SurfaceHolder.Callba
     return true
   }
 
+  /**
+   * Update UI
+   */
+  private fun updateUIStream(isStreaming: Boolean){
+    runOnUiThread {
+      if (isStreaming) {
+        start_stop.background = getDrawable(R.drawable.custom_oval_button_2)
+        start_stop.text = getString(R.string.stop)
+        rotate_btn.visibility = View.INVISIBLE
+        flip_btn.visibility = View.INVISIBLE
+      } else {
+        start_stop.background = getDrawable(R.drawable.custom_oval_button_1)
+        start_stop.text = getString(R.string.start)
+        rotate_btn.visibility = View.VISIBLE
+        flip_btn.visibility = View.VISIBLE
+      }
+    }
+  }
+
 
   companion object{
-    const val TAG = "BackgroundCameraStreamActivity"
+    const val TAG = "BackgroundUSBStreamActivity"
   }
 
 }
