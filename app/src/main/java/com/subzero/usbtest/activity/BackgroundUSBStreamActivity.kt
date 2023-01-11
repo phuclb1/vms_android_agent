@@ -1,5 +1,6 @@
 package com.subzero.usbtest.activity
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.ActivityManager
 import android.content.Context
@@ -56,7 +57,7 @@ class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
 
     USBStreamService.init(this, openglview)
 
-    layout_no_camera_found.visibility = View.GONE
+    layout_no_camera_found.visibility = View.VISIBLE
 
     openglview.holder.addCallback(this)
 
@@ -100,20 +101,12 @@ class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
     if (isMyServiceRunning(USBStreamService::class.java)) {
       stopService(Intent(applicationContext, USBStreamService::class.java))
       updateUIStream(false)
-//      b_start_stop.setText(R.string.start_button)
     } else {
       val intent = Intent(applicationContext, USBStreamService::class.java)
       intent.putExtra("endpoint", et_url.text.toString())
       startService(intent)
       updateUIStream(true)
-//      b_start_stop.setText(R.string.stop_button)
     }
-//    if (!USBStreamService.isStreaming()!!) {
-//      callStartStream(et_url.text.toString())
-//    } else {
-//      callStopStream()
-//    }
-//    updateUIStream()
   }
 
   /**
@@ -198,7 +191,7 @@ class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
     override fun onAttach(device: UsbDevice?) {
       logService.appendLog("onDeviceConnectListener ---- onAttach", TAG)
       if (device != null) {
-//        layout_no_camera_found.visibility = View.INVISIBLE
+        layout_no_camera_found.visibility = View.INVISIBLE
         usbMonitor.requestPermission(device)
       }
     }
@@ -211,7 +204,7 @@ class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
         logService.appendLog("onDeviceConnectListener ---- ${device.deviceName}", TAG)
       }else{
         logService.appendLog("onDeviceConectListener ---- device null", TAG)
-//        layout_no_camera_found.visibility = View.VISIBLE
+        layout_no_camera_found.visibility = View.VISIBLE
         return
       }
 
@@ -244,12 +237,13 @@ class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
 
       isUsbOpen = true
       logService.appendLog("onDeviceConectListener --- success ", TAG)
-//      layout_no_camera_found.visibility = View.INVISIBLE
+      layout_no_camera_found.visibility = View.INVISIBLE
     }
 
+    @SuppressLint("SuspiciousIndentation")
     override fun onDisconnect(device: UsbDevice?, ctrlBlock: USBMonitor.UsbControlBlock?) {
       logService.appendLog("MainActivity onDisconnect", TAG)
-//      layout_no_camera_found.visibility = View.VISIBLE
+      layout_no_camera_found.visibility = View.VISIBLE
 //      if (uvcCamera != null) {
         updateUIStream(false)
 //        callStopStream()

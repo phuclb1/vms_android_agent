@@ -93,11 +93,11 @@ class USBStreamService : Service() {
         private val width = 1280
         private val height = 720
         @SuppressLint("StaticFieldLeak")
-        private var rtmpUSB: USBBase2? = null // RtmpUSB? = null
+        private var rtmpUSB: USBBase2? = null
         private var uvcCamera: UVCCamera? = null
-//        private var isUsbOpen = false
 
         private var openGlView: OpenGlView? = null
+        @SuppressLint("StaticFieldLeak")
         private var contextApp: Context? = null
 
         fun isStreaming(): Boolean{
@@ -220,8 +220,18 @@ class USBStreamService : Service() {
     }
 
     private fun startStreamRtp(endpoint: String) {
+        val sampleRate = 44100
+        val audioBitrate = 64 * 1024
+        val videoBitrate = 1200 * 1024
+        val fps = 15
+        val rotation = 0
         if (!rtmpUSB!!.isStreaming) {
-            if (rtmpUSB!!.prepareVideo(uvcCamera) && rtmpUSB!!.prepareAudio()) {
+            if(rtmpUSB!!.prepareVideo(
+                    width, height, fps, videoBitrate, false, rotation, uvcCamera
+                )
+                && rtmpUSB!!.prepareAudio(
+                    audioBitrate, sampleRate, true, false, false
+                )){
                 rtmpUSB!!.startStream(uvcCamera, endpoint)
             }
         } else {

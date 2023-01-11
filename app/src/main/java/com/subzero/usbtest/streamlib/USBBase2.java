@@ -33,30 +33,17 @@ import com.serenegiant.usb.UVCCamera;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-/**
- * Wrapper to stream with camera1 api and microphone. Support stream with SurfaceView, TextureView
- * and OpenGlView(Custom SurfaceView that use OpenGl). SurfaceView and TextureView use buffer to
- * buffer encoding mode for H264 and OpenGlView use Surface to buffer mode(This mode is generally
- * better because skip buffer processing).
- * <p>
- * API requirements:
- * SurfaceView and TextureView mode: API 16+.
- * OpenGlView: API 18+.
- * <p>
- * Created by pedro on 7/07/17.
- */
-
 public abstract class USBBase2
         implements GetAacData, GetCameraData, GetVideoData, GetMicrophoneData {
 
-    private static final String TAG = "Camera2Base";
+    private static final String TAG = "USBBase2";
 
     private Context context;
     protected VideoEncoder videoEncoder;
     private MicrophoneManager microphoneManager;
     private AudioEncoder audioEncoder;
-    private SurfaceView surfaceView;
-    private TextureView textureView;
+//    private SurfaceView surfaceView;
+//    private TextureView textureView;
     private GlInterface glInterface;
     private boolean streaming = false;
     private boolean videoEnabled = true;
@@ -65,14 +52,14 @@ public abstract class USBBase2
     private int previewWidth, previewHeight;
     private FpsListener fpsListener = new FpsListener();
     //record
-    private MediaMuxer mediaMuxer;
-    private int videoTrack = -1;
-    private int audioTrack = -1;
+//    private MediaMuxer mediaMuxer;
+//    private int videoTrack = -1;
+//    private int audioTrack = -1;
     private boolean recording = false;
-    private boolean canRecord = false;
+//    private boolean canRecord = false;
     private boolean onPreview = false;
-    private MediaFormat videoFormat;
-    private MediaFormat audioFormat;
+//    private MediaFormat videoFormat;
+//    private MediaFormat audioFormat;
 
     public USBBase2(OpenGlView openGlView) {
         context = openGlView.getContext();
@@ -250,19 +237,17 @@ public abstract class USBBase2
         if (!isStreaming() && !onPreview && !isBackground) {
             previewWidth = width;
             previewHeight = height;
-            if (surfaceView != null) {
-            } else if (textureView != null) {
-            } else if (glInterface != null) {
+
+            if (glInterface != null) {
                 boolean isPortrait = CameraHelper.isPortrait(context);
-                if (isPortrait) {
+                if (!isPortrait) {
                     glInterface.setEncoderSize(height, width);
                 } else {
                     glInterface.setEncoderSize(width, height);
                 }
-                glInterface.setRotation(rotation == 0 ? 270 : rotation - 90);
+//                glInterface.setRotation(rotation == 0 ? 270 : rotation - 90);
+                glInterface.setRotation(rotation);
                 glInterface.start();
-                if(glInterface.getSurfaceTexture() == null)
-                    Log.d(TAG, "------- glInterface.getSurfaceTexture() null");
                 uvcCamera.setPreviewTexture(glInterface.getSurfaceTexture());
                 uvcCamera.startPreview();
             }
@@ -311,24 +296,6 @@ public abstract class USBBase2
     }
 
     private void startEncoders(UVCCamera uvcCamera) {
-//        videoEncoder.start();
-//        audioEncoder.start();
-//        microphoneManager.start();
-//
-//        uvcCamera.stopPreview();
-//        glInterface.stop();
-//        glInterface.setEncoderSize(videoEncoder.getWidth(), videoEncoder.getHeight());
-//        glInterface.setRotation(0);
-//        glInterface.start();
-//        uvcCamera.setPreviewTexture(glInterface.getSurfaceTexture());
-//        uvcCamera.startPreview();
-//
-//        if (videoEncoder.getInputSurface() != null) {
-//            glInterface.addMediaCodecSurface(videoEncoder.getInputSurface());
-//        }
-//
-//        onPreview = true;
-
         videoEncoder.start();
         audioEncoder.start();
         prepareGlView(uvcCamera);
@@ -342,14 +309,6 @@ public abstract class USBBase2
     }
 
     private void resetVideoEncoder(UVCCamera uvcCamera) {
-//        if (glInterface != null) {
-//            glInterface.removeMediaCodecSurface();
-//        }
-//        videoEncoder.reset();
-//        if (glInterface != null) {
-//            glInterface.addMediaCodecSurface(videoEncoder.getInputSurface());
-//        }
-
         if (glInterface != null) {
             glInterface.removeMediaCodecSurface();
         }
@@ -377,7 +336,8 @@ public abstract class USBBase2
                 glInterface.setEncoderSize(videoEncoder.getWidth(), videoEncoder.getHeight());
             }
             int rotation = videoEncoder.getRotation();
-            glInterface.setRotation(rotation == 0 ? 270 : rotation - 90);
+//            glInterface.setRotation(rotation == 0 ? 270 : rotation - 90);
+            glInterface.setRotation(rotation);
             if (videoEncoder.getWidth() != previewWidth
                     || videoEncoder.getHeight() != previewHeight) {
                 glInterface.start();
