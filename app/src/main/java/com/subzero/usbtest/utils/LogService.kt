@@ -63,7 +63,7 @@ public class LogService private constructor(){
         try {
             val buf = BufferedWriter(FileWriter(logfile, true))
             val timeLog = SimpleDateFormat("yyyy/MM/dd-HH:mm:ss ").format(Date()).toString()
-            buf.append(timeLog + text)
+            buf.append("$timeLog   $tag : $text")
             buf.newLine()
             buf.close()
         } catch (e: IOException) {
