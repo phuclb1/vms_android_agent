@@ -64,7 +64,8 @@ class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
     sessionManager = SessionManager(this)
     token = sessionManager.fetchAuthToken().toString()
     var rtmpUrl = "rtmp://${sessionManager.fetchServerIp().toString()}:${Constants.RTMP_PORT}/live/$token"
-    rtmpUrl = "rtmp://103.160.84.179:21935/live/livestream"
+//    rtmpUrl = "rtmp://103.160.84.179:21935/live/livestream"
+    rtmpUrl = "rtmp://192.168.145.116:1935/live/livestream"
     logService.appendLog("RTMP url: $rtmpUrl", BackgroundCameraStreamActivity.TAG)
     et_url.setText(rtmpUrl)
 
@@ -159,20 +160,23 @@ class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
    * Surface event
    */
   override fun surfaceChanged(holder: SurfaceHolder, p1: Int, p2: Int, p3: Int) {
+    logService.appendLog("surfaceChanged", TAG)
     USBStreamService.setView(openglview)
 //    USBStreamService.startPreview()
   }
 
   override fun surfaceDestroyed(holder: SurfaceHolder) {
+    logService.appendLog("surfaceDestroyed", TAG)
     USBStreamService.setView(applicationContext)
-    USBStreamService.stopPreview()
+//    USBStreamService.stopPreview()
   }
 
   override fun surfaceCreated(holder: SurfaceHolder) {
-
+    logService.appendLog("surfaceCreated", TAG)
   }
 
   override fun onResume() {
+    logService.appendLog("surfaceCreated", TAG)
     super.onResume()
     if (isMyServiceRunning(USBStreamService::class.java)) {
       updateUIStream(USBStreamService.isStreaming())
@@ -183,6 +187,7 @@ class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
 
   @Suppress("DEPRECATION")
   private fun isMyServiceRunning(serviceClass: Class<*>): Boolean {
+    logService.appendLog("surfaceCreated", TAG)
     val manager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
     for (service in manager.getRunningServices(Integer.MAX_VALUE)) {
       if (serviceClass.name == service.service.className) {
@@ -251,7 +256,7 @@ class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
 
     @SuppressLint("SuspiciousIndentation")
     override fun onDisconnect(device: UsbDevice?, ctrlBlock: USBMonitor.UsbControlBlock?) {
-      logService.appendLog("MainActivity onDisconnect", TAG)
+      logService.appendLog("onDeviceConectListener onDisconnect", TAG)
       layout_no_camera_found.visibility = View.VISIBLE
       updateUIStream(false)
       stopService()
@@ -261,14 +266,14 @@ class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
     }
 
     override fun onDettach(device: UsbDevice?) {
-      logService.appendLog("MainActivity onDetach", TAG)
+      logService.appendLog("onDeviceConectListener onDetach", TAG)
       USBStreamService.closeUVCCamera()
       isUsbOpen = false
       stopService()
     }
 
     override fun onCancel(device: UsbDevice?) {
-      logService.appendLog("MainActivity onCancel", TAG)
+      logService.appendLog("onDeviceConectListener onCancel", TAG)
     }
   }
 

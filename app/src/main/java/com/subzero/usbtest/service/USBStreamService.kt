@@ -92,6 +92,14 @@ class USBStreamService : Service() {
 
         private val width = 1280
         private val height = 720
+        val rotation = 0
+        val sampleRate = 44100
+        val audioBitrate = 64 * 1024
+        val videoBitrate = 1200 * 1024
+        val fps = 15
+
+        private val logService = LogService.getInstance()
+
         @SuppressLint("StaticFieldLeak")
         private var rtmpUSB: USBBase2? = null
         private var uvcCamera: UVCCamera? = null
@@ -105,7 +113,9 @@ class USBStreamService : Service() {
         }
 
         fun setUVCCamera(uvcCamera: UVCCamera){
+            logService.appendLog("setUVCCamera", TAG)
             this.uvcCamera = uvcCamera
+            logService.appendLog("setView ---- ${this.uvcCamera!!.previewSize}", TAG)
         }
 
         fun isUVCCameraAvailable(): Boolean {
@@ -115,21 +125,27 @@ class USBStreamService : Service() {
         }
 
         fun setView(openGlView: OpenGlView) {
+            logService.appendLog("setView openGlView", TAG)
             this.openGlView = openGlView
             rtmpUSB?.replaceView(uvcCamera, openGlView)
         }
 
         fun setView(context: Context) {
+            logService.appendLog("setView context", TAG)
             contextApp = context
             this.openGlView = null
+
+            logService.appendLog("setView ---- ${uvcCamera?.previewSize}", TAG)
             rtmpUSB?.replaceView(uvcCamera, context)
         }
 
         fun startPreview() {
+            logService.appendLog("startPreview", TAG)
             rtmpUSB?.startPreview(uvcCamera, width, height, 0)
         }
 
         fun init(context: Context, openGlView: OpenGlView) {
+            logService.appendLog("init", TAG)
             this.openGlView = openGlView
             contextApp = context
             if (rtmpUSB == null)
@@ -137,14 +153,18 @@ class USBStreamService : Service() {
         }
 
         fun stopStream() {
+            logService.appendLog("stopStream", TAG)
             if (rtmpUSB != null) {
                 if (rtmpUSB!!.isStreaming) rtmpUSB!!.stopStream(uvcCamera)
             }
         }
 
         fun stopPreview() {
+            logService.appendLog("stopPreview", TAG)
             if (rtmpUSB != null) {
-                if (rtmpUSB!!.isOnPreview) rtmpUSB!!.stopPreview(uvcCamera)
+                if (rtmpUSB!!.isOnPreview) {
+                    rtmpUSB!!.stopPreview(uvcCamera)
+                }
             }
         }
 
@@ -188,6 +208,7 @@ class USBStreamService : Service() {
         }
 
         fun closeUVCCamera(){
+            logService.appendLog("closeUVCCamera", TAG)
             if(uvcCamera != null) {
                 uvcCamera?.close()
                 uvcCamera = null
@@ -197,34 +218,23 @@ class USBStreamService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        Log.e(TAG, "Stream Service destroy")
+        logService.appendLog("Stream Service destroy", TAG)
         stopStream()
     }
 
     private fun prepareStreamRtp() {
+        logService.appendLog("prepareStreamRtp", TAG)
         stopStream()
         stopPreview()
-        if (endpoint!!.startsWith("rtmp")) {
-            rtmpUSB = if (openGlView == null) {
-                RtmpUSB2(baseContext, connectCheckerRtp)
-            } else {
-                RtmpUSB2(openGlView, connectCheckerRtp)
-            }
+        rtmpUSB = if (openGlView == null) {
+            RtmpUSB2(baseContext, connectCheckerRtp)
         } else {
-            rtmpUSB = if (openGlView == null) {
-                RtmpUSB2(baseContext, connectCheckerRtp)
-            } else {
-                RtmpUSB2(openGlView, connectCheckerRtp)
-            }
+            RtmpUSB2(openGlView, connectCheckerRtp)
         }
     }
 
     private fun startStreamRtp(endpoint: String) {
-        val sampleRate = 44100
-        val audioBitrate = 64 * 1024
-        val videoBitrate = 1200 * 1024
-        val fps = 15
-        val rotation = 0
+        logService.appendLog("startStreamRtp", TAG)
         if (!rtmpUSB!!.isStreaming) {
             if(rtmpUSB!!.prepareVideo(
                     width, height, fps, videoBitrate, false, rotation, uvcCamera

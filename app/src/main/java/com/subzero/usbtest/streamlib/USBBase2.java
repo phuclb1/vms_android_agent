@@ -207,13 +207,14 @@ public abstract class USBBase2
                 this.glInterface = glInterface;
                 this.glInterface.init();
                 boolean isPortrait = CameraHelper.isPortrait(context);
-                if (isPortrait) {
+                if (!isPortrait) {
                     this.glInterface.setEncoderSize(videoEncoder.getHeight(), videoEncoder.getWidth());
                 } else {
                     this.glInterface.setEncoderSize(videoEncoder.getWidth(), videoEncoder.getHeight());
                 }
-                this.glInterface.setRotation(
-                        videoEncoder.getRotation() == 0 ? 270 : videoEncoder.getRotation() - 90);
+                this.glInterface.setRotation(videoEncoder.getRotation());
+//                this.glInterface.setRotation(
+//                        videoEncoder.getRotation() == 0 ? 270 : videoEncoder.getRotation() - 90);
                 this.glInterface.start();
                 if (isStreaming() || isRecording()) {
                     this.glInterface.addMediaCodecSurface(videoEncoder.getInputSurface());
