@@ -547,6 +547,6 @@ class USBStreamActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerRtmp
   }
 
   companion object{
-    const val TAG = "Main"
+    const val TAG = "USB Stream Activity"
   }
 }

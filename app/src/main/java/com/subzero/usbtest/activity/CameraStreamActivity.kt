@@ -487,6 +487,6 @@ class CameraStreamActivity : Activity(), SurfaceHolder.Callback, ConnectCheckerR
   }
 
   companion object{
-    const val TAG = "Main"
+    const val TAG = "CameraStreamActivity"
   }
 }
