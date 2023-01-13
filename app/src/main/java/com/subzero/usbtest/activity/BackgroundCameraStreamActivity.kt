@@ -54,7 +54,7 @@ class BackgroundCameraStreamActivity : AppCompatActivity(), SurfaceHolder.Callba
     token = sessionManager.fetchAuthToken().toString()
     var rtmpUrl = "rtmp://${sessionManager.fetchServerIp().toString()}:${Constants.RTMP_PORT}/live/$token"
 //    rtmpUrl = "rtmp://192.168.100.2:1935/live/livestream"
-    rtmpUrl = "rtmp://103.160.84.179:21935/live/livestream"
+//    rtmpUrl = "rtmp://103.160.84.179:21935/live/livestream"
     logService.appendLog("RTMP url: $rtmpUrl", TAG)
     et_url.setText(rtmpUrl)
 
