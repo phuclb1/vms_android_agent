@@ -26,6 +26,9 @@ class BackgroundCameraStreamActivity : AppCompatActivity(), SurfaceHolder.Callba
   private var service: CameraStreamService? = null
   private lateinit var sessionManager: SessionManager
 
+  private val webRtcManager by lazy { WebRtcClient.instance }
+  private lateinit var vibrator: Vibrator
+
   private var token: String = ""
   private val logService = LogService.getInstance()
 
@@ -38,6 +41,7 @@ class BackgroundCameraStreamActivity : AppCompatActivity(), SurfaceHolder.Callba
     val logDir = Environment.DIRECTORY_DCIM
     Thread.setDefaultUncaughtExceptionHandler(CustomizedExceptionHandler(logDir))
 
+    /* Request permission */
     if (!hasPermissions()) {
       ActivityCompat.requestPermissions(this, Constants.CAMERA_REQUIRED_PERMISSIONS, 1)
     }
@@ -48,43 +52,56 @@ class BackgroundCameraStreamActivity : AppCompatActivity(), SurfaceHolder.Callba
       startPreview()
     }
 
-    layout_no_camera_found.visibility = View.GONE
-
     sessionManager = SessionManager(this)
     token = sessionManager.fetchAuthToken().toString()
-    var rtmpUrl = "rtmp://${sessionManager.fetchServerIp().toString()}:${Constants.RTMP_PORT}/live/$token"
-//    rtmpUrl = "rtmp://192.168.100.2:1935/live/livestream"
-//    rtmpUrl = "rtmp://103.160.84.179:21935/live/livestream"
-    logService.appendLog("RTMP url: $rtmpUrl", TAG)
-    et_url.setText(rtmpUrl)
+
+    generateStreamRtmpUrl()
 
     setButtonClickListener()
 
     openglview.holder.addCallback(this)
-
+    layout_no_camera_found.visibility = View.GONE
     updateUIStream()
 
-//    service?.onIceConnectionChangeCallback = fun(state){
-//      runOnUiThread {
-//        if (state == PeerConnection.IceConnectionState.CONNECTED) {
-//          layout_calling.visibility = View.INVISIBLE
-//        }
-//        if (state == PeerConnection.IceConnectionState.CLOSED) {
-//          layout_calling.visibility = View.GONE
-//        }
-//      }
-//    }
-//    service?.onCallingCallback = fun(){
-//      Log.d(TAG, "========== activity: oncalling")
-//      runOnUiThread {
-//        layout_calling.visibility = View.VISIBLE
-//      }
-//    }
-//    service?.onCallLeaveCallback = fun(){
-//        runOnUiThread {
-//          end_call_btn.visibility = View.GONE
-//        }
-//    }
+    /* Voice Call */
+    vibrator = this.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+    val stunUri = sessionManager.fetchWebRTCStunUri()
+    val turnUri = sessionManager.fetchWebRTCTurnUri()
+    webRtcManager.init(this, stunUri, turnUri)
+    webRtcManager.connect(sessionManager.fetchWebRTCSocketUrl(), token)
+    webRtcManager.onIceConnectionChangeCallback = fun(state)
+    {
+      Log.d(TAG, "------ callback: onPeerConectionChange $state")
+      runOnUiThread {
+        if (state == PeerConnection.IceConnectionState.CONNECTED) {
+          layout_calling.visibility = View.INVISIBLE
+        }
+        if (state == PeerConnection.IceConnectionState.CLOSED){
+          layout_calling.visibility = View.GONE
+        }
+        else {
+
+        }
+      }
+    }
+    webRtcManager.onCallingCallback = fun(){
+      Log.d(TAG, "------ callback: onCalling")
+      val pattern = longArrayOf(1500, 800, 800, 800)
+      runOnUiThread {
+        layout_calling.visibility = View.VISIBLE
+        if (Build.VERSION.SDK_INT >= 26) {
+          vibrator.vibrate(VibrationEffect.createWaveform(pattern, 0))
+        } else {
+          vibrator.vibrate(200)
+        }
+      }
+    }
+    webRtcManager.onCallLeaveCallback = fun(){
+      Log.d(TAG, "------ callback: onCallLeaveCallback")
+      runOnUiThread {
+        end_call_btn.visibility = View.GONE
+      }
+    }
   }
 
   override fun onBackPressed() {
@@ -94,33 +111,42 @@ class BackgroundCameraStreamActivity : AppCompatActivity(), SurfaceHolder.Callba
     startActivity(intent)
   }
 
+  private fun generateStreamRtmpUrl(){
+    var rtmpUrl = "rtmp://${sessionManager.fetchServerIp().toString()}:${Constants.RTMP_PORT}/live/$token"
+//    rtmpUrl = "rtmp://192.168.100.2:1935/live/livestream"
+//    rtmpUrl = "rtmp://103.160.84.179:21935/live/livestream"
+    logService.appendLog("RTMP url: $rtmpUrl", TAG)
+    et_url.setText(rtmpUrl)
+  }
+
   private fun setButtonClickListener(){
     start_stop.setOnClickListener { onButtonStreamClick() }
-//    decline_call_btn.setOnClickListener { onDeclineCall() }
-//    accept_call_btn.setOnClickListener { onAcceptCall() }
-//    end_call_btn.setOnClickListener { onEndCall() }
+
+    decline_call_btn.setOnClickListener { onDeclineCall() }
+    accept_call_btn.setOnClickListener { onAcceptCall() }
+    end_call_btn.setOnClickListener { onEndCall() }
   }
 
   /**
    * Calling phone
    */
-//  private fun onDeclineCall(){
-//    service?.onDeclineCall()
-//  }
-//
-//  private fun onAcceptCall(){
-//    service?.onAcceptCall()
-//    runOnUiThread {
-//      end_call_btn.visibility = View.VISIBLE
-//    }
-//  }
-//
-//  private fun onEndCall(){
-//    service?.onEndCall()
-//    runOnUiThread {
-//      end_call_btn.visibility = View.GONE
-//    }
-//  }
+  private fun onDeclineCall(){
+    webRtcManager.closeCall()
+    vibrator.cancel()
+  }
+
+  private fun onAcceptCall(){
+    webRtcManager.startAnswer()
+    end_call_btn.visibility = View.VISIBLE
+    vibrator.cancel()
+  }
+
+  private fun onEndCall(){
+    webRtcManager.closeCall()
+    runOnUiThread {
+      end_call_btn.visibility = View.GONE
+    }
+  }
 
   /**
    * Option Menu

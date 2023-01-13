@@ -33,6 +33,9 @@ import java.util.*
 class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
   private lateinit var sessionManager: SessionManager
 
+  private val webRtcManager by lazy { WebRtcClient.instance }
+  private lateinit var vibrator: Vibrator
+
   private var token: String = ""
   private val logService = LogService.getInstance()
 
@@ -56,26 +59,33 @@ class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
       ActivityCompat.requestPermissions(this, Constants.CAMERA_REQUIRED_PERMISSIONS, 1)
     }
 
+    /* Usb monitor */
     usbMonitor = USBMonitor(this, onDeviceConnectListener)
     usbMonitor.register()
 
     USBStreamService.init(this, openglview)
 
     layout_no_camera_found.visibility = View.VISIBLE
-
     openglview.holder.addCallback(this)
 
     sessionManager = SessionManager(this)
     token = sessionManager.fetchAuthToken().toString()
-    var rtmpUrl = "rtmp://${sessionManager.fetchServerIp().toString()}:${Constants.RTMP_PORT}/live/$token"
-//    rtmpUrl = "rtmp://103.160.84.179:21935/live/livestream"
-//    rtmpUrl = "rtmp://192.168.145.116:1935/live/livestream"
-    logService.appendLog("RTMP url: $rtmpUrl", BackgroundCameraStreamActivity.TAG)
-    et_url.setText(rtmpUrl)
+
+    generateStreamRtmpUrl()
 
     setButtonClickListener()
 
     updateUIStream(USBStreamService.isStreaming())
+
+    /* Voice Call */
+    vibrator = this.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+    val stunUri = sessionManager.fetchWebRTCStunUri()
+    val turnUri = sessionManager.fetchWebRTCTurnUri()
+    webRtcManager.init(this, stunUri, turnUri)
+    webRtcManager.connect(sessionManager.fetchWebRTCSocketUrl(), token)
+    webRtcManager.onIceConnectionChangeCallback = fun(state) { onIceConnectionChangeCallback(state) }
+    webRtcManager.onCallingCallback = fun(){ onCallingCallback() }
+    webRtcManager.onCallLeaveCallback = fun(){ onCallLeaveCallback() }
   }
 
   override fun onDestroy() {
@@ -91,13 +101,78 @@ class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
     stopService(Intent(applicationContext, USBStreamService::class.java))
   }
 
+  private fun generateStreamRtmpUrl(){
+    var rtmpUrl = "rtmp://${sessionManager.fetchServerIp().toString()}:${Constants.RTMP_PORT}/live/$token"
+//    rtmpUrl = "rtmp://192.168.100.2:1935/live/livestream"
+//    rtmpUrl = "rtmp://103.160.84.179:21935/live/livestream"
+    logService.appendLog("RTMP url: $rtmpUrl", TAG)
+    et_url.setText(rtmpUrl)
+  }
+
   private fun setButtonClickListener(){
     start_stop.setOnClickListener { onButtonStreamClick() }
     rotate_btn.setOnClickListener { onRotateClick() }
     flip_btn.setOnClickListener { onFlipClick() }
-//    decline_call_btn.setOnClickListener { onDeclineCall() }
-//    accept_call_btn.setOnClickListener { onAcceptCall() }
-//    end_call_btn.setOnClickListener { onEndCall() }
+
+    decline_call_btn.setOnClickListener { onDeclineCall() }
+    accept_call_btn.setOnClickListener { onAcceptCall() }
+    end_call_btn.setOnClickListener { onEndCall() }
+  }
+
+  /**
+   * Calling phone
+   */
+  private fun onDeclineCall(){
+    webRtcManager.closeCall()
+    vibrator.cancel()
+  }
+
+  private fun onAcceptCall(){
+    webRtcManager.startAnswer()
+    end_call_btn.visibility = View.VISIBLE
+    vibrator.cancel()
+  }
+
+  private fun onEndCall(){
+    webRtcManager.closeCall()
+    runOnUiThread {
+      end_call_btn.visibility = View.GONE
+    }
+  }
+
+  private fun onIceConnectionChangeCallback(state: PeerConnection.IceConnectionState){
+    Log.d(TAG, "------ callback: onPeerConectionChange $state")
+    runOnUiThread {
+      if (state == PeerConnection.IceConnectionState.CONNECTED) {
+        layout_calling.visibility = View.INVISIBLE
+      }
+      if (state == PeerConnection.IceConnectionState.CLOSED){
+        layout_calling.visibility = View.GONE
+      }
+      else {
+
+      }
+    }
+  }
+
+  private fun onCallingCallback(){
+    Log.d(TAG, "------ callback: onCalling")
+    val pattern = longArrayOf(1500, 800, 800, 800)
+    runOnUiThread {
+      layout_calling.visibility = View.VISIBLE
+      if (Build.VERSION.SDK_INT >= 26) {
+        vibrator.vibrate(VibrationEffect.createWaveform(pattern, 0))
+      } else {
+        vibrator.vibrate(200)
+      }
+    }
+  }
+
+  private fun onCallLeaveCallback(){
+    Log.d(TAG, "------ callback: onCallLeaveCallback")
+    runOnUiThread {
+      end_call_btn.visibility = View.GONE
+    }
   }
 
   /**
@@ -112,6 +187,9 @@ class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
     }
   }
 
+  /**
+   * Stop/start service
+   */
   private fun stopService(){
     stopService(Intent(applicationContext, USBStreamService::class.java))
     updateUIStream(false)
