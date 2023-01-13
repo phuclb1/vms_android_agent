@@ -53,6 +53,8 @@ class BackgroundCameraStreamActivity : AppCompatActivity(), SurfaceHolder.Callba
     sessionManager = SessionManager(this)
     token = sessionManager.fetchAuthToken().toString()
     var rtmpUrl = "rtmp://${sessionManager.fetchServerIp().toString()}:${Constants.RTMP_PORT}/live/$token"
+//    rtmpUrl = "rtmp://192.168.100.2:1935/live/livestream"
+    rtmpUrl = "rtmp://103.160.84.179:21935/live/livestream"
     logService.appendLog("RTMP url: $rtmpUrl", TAG)
     et_url.setText(rtmpUrl)
 
@@ -133,16 +135,6 @@ class BackgroundCameraStreamActivity : AppCompatActivity(), SurfaceHolder.Callba
       when(item.itemId){
         R.id.menu_setting -> {}
         R.id.menu_about -> {}
-        R.id.menu_phone_cam -> {
-          val intent_activity = Intent(applicationContext, CameraStreamActivity::class.java)
-          intent_activity.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-          startActivity(intent_activity)
-        }
-        R.id.menu_usb_cam -> {
-          val intent_activity = Intent(applicationContext, USBStreamActivity::class.java)
-          intent_activity.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-          startActivity(intent_activity)
-        }
         R.id.menu_background_phone_cam -> {
           val intent_activity = Intent(applicationContext, BackgroundCameraStreamActivity::class.java)
           intent_activity.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
@@ -246,7 +238,7 @@ class BackgroundCameraStreamActivity : AppCompatActivity(), SurfaceHolder.Callba
         }
       }
     }catch (e: java.lang.Exception){
-      Log.d(CameraStreamActivity.TAG, e.toString())
+      Log.d(TAG, e.toString())
     }
   }
 
@@ -255,7 +247,7 @@ class BackgroundCameraStreamActivity : AppCompatActivity(), SurfaceHolder.Callba
     try {
       service?.stopStream()
     }catch (e: java.lang.Exception){
-      Log.d(CameraStreamActivity.TAG, e.toString())
+      Log.d(TAG, e.toString())
     }
   }
 

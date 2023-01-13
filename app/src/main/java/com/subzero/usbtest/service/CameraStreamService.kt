@@ -12,16 +12,14 @@ import android.os.IBinder
 import android.support.v4.app.NotificationCompat
 import android.util.Log
 import android.widget.Toast
+import com.pedro.rtmp.utils.ConnectCheckerRtmp
 import com.pedro.rtplibrary.rtmp.RtmpCamera2
 import com.pedro.rtplibrary.view.OpenGlView
-import com.serenegiant.utils.UIThreadHelper.runOnUiThread
 import com.subzero.usbtest.Constants
 import com.subzero.usbtest.R
-import com.subzero.usbtest.activity.CameraStreamActivity
 import com.subzero.usbtest.api.AgentClient
 import com.subzero.usbtest.utils.LogService
 import com.subzero.usbtest.utils.SessionManager
-import net.ossrs.rtmp.ConnectCheckerRtmp
 import okhttp3.*
 import java.io.File
 import java.io.IOException
@@ -163,8 +161,6 @@ class CameraStreamService : Service() {
         override fun onConnectionFailedRtmp(reason: String) {
             showNotification("Stream connection failed")
             logService.appendLog("connect rtmp fail", TAG)
-
-            logService.appendLog("connect rtmp fail", TAG)
             if(!rtmpCamera?.isRecording!!){
                 val currentTimestamp = System.currentTimeMillis()
                 val fileRecord = "$folderRecord/$currentTimestamp.mp4"
@@ -174,11 +170,10 @@ class CameraStreamService : Service() {
                 }
             }
 
-            if(rtmpCamera!!.shouldRetry(reason)){
-                rtmpCamera!!.reConnect(1000)
-            }else{
-                rtmpCamera!!.setReTries(1000)
-            }
+            rtmpCamera!!.reTry(1000, reason)
+        }
+
+        override fun onConnectionStartedRtmp(rtmpUrl: String) {
         }
 
         override fun onNewBitrateRtmp(bitrate: Long) {
@@ -206,6 +201,9 @@ class CameraStreamService : Service() {
      */
     private fun callStartRecord(url: String):Boolean{
         logService.appendLog("call start record", TAG)
+        if (!folderRecord.exists()){
+            folderRecord.mkdirs()
+        }
         if(rtmpCamera?.isStreaming == true && !rtmpCamera?.isRecording!! && !flagRecording){
             flagRecording = true
             try{

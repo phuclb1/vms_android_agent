@@ -45,36 +45,6 @@
                 android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
                 android:resource="@xml/device_filterall" />
         </activity>
-        <activity android:name=".activity.USBStreamActivity"
-            android:screenOrientation="portrait"
-            android:theme="@style/StreamTheme"
-            android:label="Stream"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-
-            <meta-data
-                android:name="android.app.lib_name"
-                android:value="" />
-        </activity>
-        <activity android:name=".activity.CameraStreamActivity"
-            android:screenOrientation="portrait"
-            android:theme="@style/StreamTheme"
-            android:label="Camera Stream"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-
-            <meta-data
-                android:name="android.app.lib_name"
-                android:value="" />
-        </activity>
         <activity android:name=".activity.BackgroundCameraStreamActivity"
             android:screenOrientation="portrait"
             android:theme="@style/AppThemeBackground"

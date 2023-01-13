@@ -46,11 +46,10 @@ class LoginActivity : AppCompatActivity() {
         sessionManager = SessionManager(this)
 
         intent_activity = if(Constants.IS_DEFAULT_USB_CAMERA) {
-//            Intent(applicationContext, USBStreamActivity::class.java)
             Intent(applicationContext, BackgroundUSBStreamActivity::class.java)
         }
         else {
-            Intent(applicationContext, CameraStreamActivity::class.java)
+            Intent(applicationContext, BackgroundCameraStreamActivity::class.java)
         }
         et_username.setText("vsmart")
         et_password?.setText("123456aA@")

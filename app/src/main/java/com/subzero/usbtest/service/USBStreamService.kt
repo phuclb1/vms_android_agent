@@ -5,44 +5,29 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
-import android.arch.lifecycle.MutableLiveData
 import android.content.Context
 import android.content.Intent
-import android.hardware.usb.UsbDevice
 import android.os.Build
 import android.os.IBinder
-import android.os.VibrationEffect
-import android.os.Vibrator
 import android.support.v4.app.NotificationCompat
 import android.util.Log
-import android.view.View
 import android.widget.Toast
-import com.pedro.rtplibrary.base.Camera2Base
-import com.pedro.rtplibrary.rtmp.RtmpCamera2
-import com.pedro.rtplibrary.rtsp.RtspCamera2
+import com.pedro.rtmp.utils.ConnectCheckerRtmp
 import com.pedro.rtplibrary.view.OpenGlView
-import com.serenegiant.usb.USBMonitor
 import com.serenegiant.usb.UVCCamera
-import com.serenegiant.utils.UIThreadHelper
-import com.serenegiant.utils.UIThreadHelper.runOnUiThread
 import com.subzero.usbtest.Constants
 import com.subzero.usbtest.R
-import com.subzero.usbtest.activity.BackgroundCameraStreamActivity
-import com.subzero.usbtest.activity.CameraStreamActivity
-import com.subzero.usbtest.activity.USBStreamActivity
 import com.subzero.usbtest.api.AgentClient
-import com.subzero.usbtest.rtc.WebRtcClient
-import com.subzero.usbtest.streamlib.RtmpUSB
 import com.subzero.usbtest.streamlib.RtmpUSB2
 import com.subzero.usbtest.streamlib.USBBase2
 import com.subzero.usbtest.utils.LogService
 import com.subzero.usbtest.utils.SessionManager
 import kotlinx.android.synthetic.main.activity_main.*
-import net.ossrs.rtmp.ConnectCheckerRtmp
 import okhttp3.*
-import org.webrtc.PeerConnection
 import java.io.File
 import java.io.IOException
+import java.util.LinkedList
+import java.util.Queue
 
 class USBStreamService : Service() {
     private var endpoint: String? = null
@@ -56,6 +41,10 @@ class USBStreamService : Service() {
             notificationManager?.createNotificationChannel(channel)
         }
         keepAliveTrick()
+
+        sessionManager = SessionManager(this)
+        token = sessionManager.fetchAuthToken().toString()
+        streamServerIP = sessionManager.fetchServerIp().toString()
     }
 
     private fun keepAliveTrick() {
@@ -98,7 +87,17 @@ class USBStreamService : Service() {
         val videoBitrate = 1200 * 1024
         val fps = 15
 
+        private var flagRecording = false
+        private var fileRecording: String = ""
+        private val videoRecordedQueue: Queue<String> = LinkedList<String>()
+        private val folderRecord = File(Constants.DOC_DIR, "video_record")
+
+        private var token: String = ""
+        private var streamServerIP : String = ""
+        private lateinit var sessionManager: SessionManager
+
         private val logService = LogService.getInstance()
+        private val agentClient = AgentClient()
 
         @SuppressLint("StaticFieldLeak")
         private var rtmpUSB: USBBase2? = null
@@ -141,7 +140,7 @@ class USBStreamService : Service() {
 
         fun startPreview() {
             logService.appendLog("startPreview", TAG)
-            rtmpUSB?.startPreview(uvcCamera, width, height, 0)
+            rtmpUSB?.startPreview(uvcCamera, width, height, fps, 0)
         }
 
         fun init(context: Context, openGlView: OpenGlView) {
@@ -157,6 +156,8 @@ class USBStreamService : Service() {
             if (rtmpUSB != null) {
                 if (rtmpUSB!!.isStreaming) rtmpUSB!!.stopStream(uvcCamera)
             }
+            if(flagRecording)
+                callStopRecord()
         }
 
         fun stopPreview() {
@@ -172,7 +173,9 @@ class USBStreamService : Service() {
         private val connectCheckerRtp = object : ConnectCheckerRtmp {
             override fun onConnectionSuccessRtmp() {
                 showNotification("Stream started")
-                Log.e(TAG, "RTP service destroy")
+                logService.appendLog("onConnectionSuccessRtmp", TAG)
+                if(flagRecording)
+                    callStopRecord()
             }
 
             override fun onNewBitrateRtmp(bitrate: Long) {
@@ -181,7 +184,22 @@ class USBStreamService : Service() {
 
             override fun onConnectionFailedRtmp(reason: String) {
                 showNotification("Stream connection failed")
-                Log.e(TAG, "RTP service destroy")
+                logService.appendLog("onConnectionFailedRtmp", TAG)
+
+                if(!rtmpUSB?.isRecording!!){
+                    val currentTimestamp = System.currentTimeMillis()
+                    val fileRecord = "$folderRecord/$currentTimestamp.mp4"
+                    val record = callStartRecord(fileRecord)
+                    if(record){
+                        fileRecording = fileRecord
+                    }
+                }
+
+                rtmpUSB?.setReTries(100)
+                rtmpUSB!!.reTry(1000, reason)
+            }
+
+            override fun onConnectionStartedRtmp(rtmpUrl: String) {
             }
 
             override fun onDisconnectRtmp() {
@@ -214,12 +232,100 @@ class USBStreamService : Service() {
                 uvcCamera = null
             }
         }
+
+        /**
+         * Record Start/Stop
+         */
+        private fun callStartRecord(url: String):Boolean{
+            if (!folderRecord.exists()){
+                folderRecord.mkdirs()
+            }
+            logService.appendLog("call start record", TAG)
+            if(rtmpUSB?.isStreaming == true && !rtmpUSB?.isRecording!! && !flagRecording){
+                flagRecording = true
+                try{
+                    logService.appendLog("started record: $url", TAG)
+                    try {
+                        rtmpUSB!!.startRecord(uvcCamera, url)
+                        return true
+                    }catch (e: IOException){
+                        flagRecording = false
+                    }
+                }
+                catch (e: java.lang.Exception){
+                    flagRecording = false
+                    logService.appendLog("record error: ${e.message}", TAG)
+                }
+            }
+            return false
+        }
+
+        private fun callStopRecord(){
+            logService.appendLog("call stop record", TAG)
+            if(rtmpUSB?.isRecording == true){
+                rtmpUSB?.stopRecord(uvcCamera)
+                flagRecording = false
+                videoRecordedQueue.add(fileRecording)
+//                uploadVideo(File(fileRecording))
+                callUploadVideo()
+            }
+        }
+
+        private fun callUploadVideo(){
+            if(videoRecordedQueue.isEmpty())
+                return
+
+            var queueInteractor = videoRecordedQueue.iterator()
+            while(queueInteractor.hasNext()){
+                val videoName = queueInteractor.next()
+                uploadVideo(File(videoName))
+            }
+        }
+
+        private fun uploadVideo(file: File){
+            logService.appendLog("======== upload video ${file.absolutePath}    ${file.name}",
+                TAG
+            )
+//            val mediaType = MediaType.parse("text/plain")
+//            val requestBody = RequestBody.create(MediaType.parse("application/octet-stream"), file)
+//            val body = MultipartBody
+//                .Builder()
+//                .setType(MultipartBody.FORM)
+//                .addFormDataPart("video_file", file.name, requestBody)
+//                .build()
+//            val request = Request.Builder()
+//                .url("http://$streamServerIP${Constants.API_UPLOAD_VIDEO}")
+//                .method("POST", body)
+//                .addHeader("Authorization", "Bearer $token")
+//                .build()
+//            agentClient.getClientOkhttpInstance().newCall(request).enqueue(object: okhttp3.Callback {
+//                override fun onFailure(call: Call, e: IOException) {
+//                    logService.appendLog("upload video failed: ${e.message.toString()}",
+//                        TAG
+//                    )
+//                }
+//
+//                override fun onResponse(call: Call, response: Response) {
+//                    val responseData = response.body().toString()
+//                    logService.appendLog("upload video success: ${file.name}",
+//                        TAG
+//                    )
+//
+//                    if(file.exists()){
+//                        file.delete()
+//                    }
+//                }
+//
+//            })
+        }
     }
 
     override fun onDestroy() {
         super.onDestroy()
         logService.appendLog("Stream Service destroy", TAG)
         stopStream()
+        if(flagRecording)
+            callStopRecord()
     }
 
     private fun prepareStreamRtp() {
@@ -236,8 +342,8 @@ class USBStreamService : Service() {
     private fun startStreamRtp(endpoint: String) {
         logService.appendLog("startStreamRtp", TAG)
         if (!rtmpUSB!!.isStreaming) {
-            if(rtmpUSB!!.prepareVideo(
-                    width, height, fps, videoBitrate, false, rotation, uvcCamera
+            if(rtmpUSB!!.prepareVideo(uvcCamera,
+                    width, height, fps, videoBitrate, rotation
                 )
                 && rtmpUSB!!.prepareAudio(
                     audioBitrate, sampleRate, true, false, false

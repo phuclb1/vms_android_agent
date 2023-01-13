@@ -6,7 +6,7 @@
     android:background="@drawable/login_edit_background"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/stream_activity"
-    tools:context=".activity.USBStreamActivity">
+    tools:context=".activity.BackgroundUSBStreamActivity">
 
     <com.pedro.rtplibrary.view.OpenGlView
         app:keepAspectRatio="true"

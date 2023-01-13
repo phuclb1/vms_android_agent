@@ -3,177 +3,173 @@ package com.subzero.usbtest.streamlib;
 import android.content.Context;
 import android.media.MediaCodec;
 
-import com.pedro.rtplibrary.view.LightOpenGlView;
-import com.pedro.rtplibrary.view.OpenGlView;
+import androidx.annotation.Nullable;
 
-import net.ossrs.rtmp.ConnectCheckerRtmp;
-import net.ossrs.rtmp.SrsFlvMuxer;
+import com.pedro.encoder.Frame;
+import com.pedro.rtmp.rtmp.RtmpClient;
+import com.pedro.rtmp.utils.ConnectCheckerRtmp;
+import com.pedro.rtplibrary.view.OpenGlView;
 
 import java.nio.ByteBuffer;
 
-/**
- * More documentation see:
- * {@link com.pedro.rtplibrary.base.Camera1Base}
- *
- * Created by pedro on 25/01/17.
- */
-
 public class RtmpUSB2 extends USBBase2 {
 
-    private SrsFlvMuxer srsFlvMuxer;
+    private final RtmpClient rtmpClient;
 
     public RtmpUSB2(OpenGlView openGlView, ConnectCheckerRtmp connectChecker) {
         super(openGlView);
-        srsFlvMuxer = new SrsFlvMuxer(connectChecker);
-    }
-
-    public RtmpUSB2(LightOpenGlView lightOpenGlView, ConnectCheckerRtmp connectChecker) {
-        super(lightOpenGlView);
-        srsFlvMuxer = new SrsFlvMuxer(connectChecker);
+        rtmpClient = new RtmpClient(connectChecker);
     }
 
     public RtmpUSB2(Context context, ConnectCheckerRtmp connectChecker) {
         super(context);
-        srsFlvMuxer = new SrsFlvMuxer(connectChecker);
+        rtmpClient = new RtmpClient(connectChecker);
     }
 
-    /**
-     * H264 profile.
-     *
-     * @param profileIop Could be ProfileIop.BASELINE or ProfileIop.CONSTRAINED
-     */
-    public void setProfileIop(byte profileIop) {
-        srsFlvMuxer.setProfileIop(profileIop);
+//    /**
+//     * H264 profile.
+//     *
+//     * @param profileIop Could be ProfileIop.BASELINE or ProfileIop.CONSTRAINED
+//     */
+//    public void setProfileIop(ProfileIop profileIop) {
+//        rtmpClient.setProfileIop(profileIop);
+//    }
+
+    @Override
+    public void resizeCache(int newSize) throws RuntimeException {
+        rtmpClient.resizeCache(newSize);
+    }
+
+    @Override
+    public int getCacheSize() {
+        return rtmpClient.getCacheSize();
+    }
+
+    @Override
+    public long getSentAudioFrames() {
+        return rtmpClient.getSentAudioFrames();
+    }
+
+    @Override
+    public long getSentVideoFrames() {
+        return rtmpClient.getSentVideoFrames();
+    }
+
+    @Override
+    public long getDroppedAudioFrames() {
+        return rtmpClient.getDroppedAudioFrames();
+    }
+
+    @Override
+    public long getDroppedVideoFrames() {
+        return rtmpClient.getDroppedVideoFrames();
+    }
+
+    @Override
+    public void resetSentAudioFrames() {
+        rtmpClient.resetSentAudioFrames();
+    }
+
+    @Override
+    public void resetSentVideoFrames() {
+        rtmpClient.resetSentVideoFrames();
+    }
+
+    @Override
+    public void resetDroppedAudioFrames() {
+        rtmpClient.resetDroppedAudioFrames();
+    }
+
+    @Override
+    public void resetDroppedVideoFrames() {
+        rtmpClient.resetDroppedVideoFrames();
     }
 
     @Override
     public void setAuthorization(String user, String password) {
-        srsFlvMuxer.setAuthorization(user, password);
+        rtmpClient.setAuthorization(user, password);
+    }
+
+    public void setWriteChunkSize(int chunkSize) {
+        if (!isStreaming()) {
+            rtmpClient.setWriteChunkSize(chunkSize);
+        }
+    }
+
+    public void forceAkamaiTs(boolean enabled) {
+        rtmpClient.forceAkamaiTs(enabled);
     }
 
     @Override
     protected void prepareAudioRtp(boolean isStereo, int sampleRate) {
-        srsFlvMuxer.setIsStereo(isStereo);
-        srsFlvMuxer.setSampleRate(sampleRate);
+        rtmpClient.setAudioInfo(sampleRate, isStereo);
     }
 
     @Override
     protected void startStreamRtp(String url) {
         if (videoEncoder.getRotation() == 90 || videoEncoder.getRotation() == 270) {
-            srsFlvMuxer.setVideoResolution(videoEncoder.getHeight(), videoEncoder.getWidth());
+            rtmpClient.setVideoResolution(videoEncoder.getHeight(), videoEncoder.getWidth());
         } else {
-            srsFlvMuxer.setVideoResolution(videoEncoder.getWidth(), videoEncoder.getHeight());
+            rtmpClient.setVideoResolution(videoEncoder.getWidth(), videoEncoder.getHeight());
         }
-        srsFlvMuxer.start(url);
+        rtmpClient.setFps(videoEncoder.getFps());
+        rtmpClient.setOnlyVideo(!audioInitialized);
+        rtmpClient.connect(url);
     }
 
     @Override
     protected void stopStreamRtp() {
-        srsFlvMuxer.stop();
+        rtmpClient.disconnect();
     }
 
     @Override
-    public boolean shouldRetry(String reason) {
-        return false;
+    protected boolean shouldRetry(String reason) {
+        return rtmpClient.shouldRetry(reason);
     }
 
     @Override
     public void setReTries(int reTries) {
-
+        rtmpClient.setReTries(reTries);
     }
 
     @Override
-    protected void reConnect(long delay) {
-
+    public void reConnect(long delay, @Nullable String backupUrl) {
+        rtmpClient.reConnect(delay, backupUrl);
     }
 
     @Override
-    public void resizeCache(int newSize) throws RuntimeException {
-
+    public boolean hasCongestion() {
+        return rtmpClient.hasCongestion();
     }
-
-    @Override
-    public int getCacheSize() {
-        return 0;
-    }
-
-    @Override
-    public long getSentAudioFrames() {
-        return 0;
-    }
-
-    @Override
-    public long getSentVideoFrames() {
-        return 0;
-    }
-
-    @Override
-    public long getDroppedAudioFrames() {
-        return 0;
-    }
-
-    @Override
-    public long getDroppedVideoFrames() {
-        return 0;
-    }
-
-    @Override
-    public void resetSentAudioFrames() {
-
-    }
-
-    @Override
-    public void resetSentVideoFrames() {
-
-    }
-
-    @Override
-    public void resetDroppedAudioFrames() {
-
-    }
-
-    @Override
-    public void resetDroppedVideoFrames() {
-
-    }
-
-//    public void setNumRetriesConnect(Integer num){
-//        if(num > 0){
-//            srsFlvMuxer.setReTries(num);
-//        }
-//    }
-//
-//    public boolean reconnectRtp(String reason, final long delayMilis){
-//        boolean shouldRetry = srsFlvMuxer.shouldRetry(reason);
-//        if(shouldRetry){
-//            srsFlvMuxer.reConnect(delayMilis);
-//        }
-//        return shouldRetry;
-//    }
-//
-//    public void reconnectRtp(final long delayMilis) {
-//        srsFlvMuxer.reConnect(delayMilis);
-//    }
 
     @Override
     protected void getAacDataRtp(ByteBuffer aacBuffer, MediaCodec.BufferInfo info) {
-        srsFlvMuxer.sendAudio(aacBuffer, info);
+        rtmpClient.sendAudio(aacBuffer, info);
     }
 
     @Override
     protected void onSpsPpsVpsRtp(ByteBuffer sps, ByteBuffer pps, ByteBuffer vps) {
-        srsFlvMuxer.setSpsPPs(sps, pps);
+        rtmpClient.setVideoInfo(sps, pps, vps);
     }
 
     @Override
     protected void getH264DataRtp(ByteBuffer h264Buffer, MediaCodec.BufferInfo info) {
-        srsFlvMuxer.sendVideo(h264Buffer, info);
+        rtmpClient.sendVideo(h264Buffer, info);
     }
 
     @Override
     public void setLogs(boolean enable) {
-
+        rtmpClient.setLogs(enable);
     }
 
+    @Override
+    public void setCheckServerAlive(boolean enable) {
+        rtmpClient.setCheckServerAlive(enable);
+    }
+
+    @Override
+    public void inputYUVData(Frame frame) {
+
+    }
 }
 
