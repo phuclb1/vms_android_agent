@@ -23,6 +23,7 @@ import com.subzero.usbtest.utils.SessionManager
 import okhttp3.*
 import java.io.File
 import java.io.IOException
+import java.util.*
 
 class CameraStreamService : Service() {
     companion object {
@@ -41,6 +42,7 @@ class CameraStreamService : Service() {
     private var streamServerIP : String = ""
     private var flagRecording = false
     private var fileRecording: String = ""
+    private val videoRecordedQueue: Queue<String> = LinkedList<String>()
     private val folderRecord = File(Constants.DOC_DIR, "video_record")
 
     override fun onBind(p0: Intent?): IBinder? {
@@ -74,7 +76,8 @@ class CameraStreamService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         Log.i(TAG, "RTP service destroy")
-        callStopRecord()
+        if(flagRecording)
+            callStopRecord()
         stopStream()
         stopPreview()
         observer.postValue(null)
@@ -139,7 +142,8 @@ class CameraStreamService : Service() {
 
     fun stopStream() {
         rtmpCamera?.stopStream()
-        callStopRecord()
+        if(flagRecording)
+            callStopRecord()
     }
 
     fun setView(openGlView: OpenGlView) {
@@ -155,7 +159,8 @@ class CameraStreamService : Service() {
         override fun onConnectionSuccessRtmp() {
             showNotification("Stream started")
             logService.appendLog("connect rtmp success", TAG)
-            callStopRecord()
+            if(flagRecording)
+                callStopRecord()
         }
 
         override fun onConnectionFailedRtmp(reason: String) {
@@ -170,6 +175,7 @@ class CameraStreamService : Service() {
                 }
             }
 
+            rtmpCamera!!.setReTries(100)
             rtmpCamera!!.reTry(1000, reason)
         }
 
@@ -228,7 +234,18 @@ class CameraStreamService : Service() {
         if(rtmpCamera?.isRecording == true){
             rtmpCamera?.stopRecord()
             flagRecording = false
-            uploadVideo(File(fileRecording))
+            videoRecordedQueue.add(fileRecording)
+            uploadAllVideoRecorded()
+        }
+    }
+
+    private fun uploadAllVideoRecorded(){
+        if(videoRecordedQueue.isEmpty())
+            return
+
+        while(!videoRecordedQueue.isEmpty()){
+            val videoname = videoRecordedQueue.poll()
+            uploadVideo(File(videoname))
         }
     }
 
