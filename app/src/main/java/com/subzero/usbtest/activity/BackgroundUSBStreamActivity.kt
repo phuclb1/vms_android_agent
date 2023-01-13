@@ -248,6 +248,9 @@ class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
       isUsbOpen = true
       logService.appendLog("onDeviceConectListener --- success ", TAG)
       layout_no_camera_found.visibility = View.INVISIBLE
+      runOnUiThread {
+        start_stop.isEnabled = isUsbOpen
+      }
     }
 
     @SuppressLint("SuspiciousIndentation")
@@ -266,6 +269,7 @@ class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
       USBStreamService.closeUVCCamera()
       isUsbOpen = false
       stopService()
+      updateUIStream(false)
     }
 
     override fun onCancel(device: UsbDevice?) {
@@ -301,6 +305,7 @@ class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
         rotate_btn.visibility = View.VISIBLE
         flip_btn.visibility = View.VISIBLE
       }
+      start_stop.isEnabled = isUsbOpen
     }
   }
 

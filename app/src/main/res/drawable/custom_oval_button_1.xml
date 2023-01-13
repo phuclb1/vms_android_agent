@@ -12,6 +12,18 @@
         </shape>
     </item>
 
+    <item android:state_enabled="false" >
+        <shape android:shape="oval">
+            <solid
+                android:color="@color/hintColor" />
+            <stroke
+                android:width="3dp"
+                android:color="@color/white" />
+            <corners
+                android:radius="0dp" />
+        </shape>
+    </item>
+
     <item>
         <shape android:shape="oval">
             <solid
