@@ -10,22 +10,14 @@
         android:title="About"
         app:showAsAction="never" />
     <item
-        android:id="@+id/menu_phone_cam"
-        android:title="Phone Camera"
-        app:showAsAction="never" />
-    <item
-        android:id="@+id/menu_usb_cam"
-        android:title="USB Camera"
-        app:showAsAction="never" />
-    <item
         android:id="@+id/menu_background_phone_cam"
-        android:title="Background Phone Camera"
+        android:title="Phone Camera"
         app:showAsAction="never"
         android:visible="true"
         />
     <item
         android:id="@+id/menu_background_usb_cam"
-        android:title="Background USB Camera"
+        android:title="USB Camera"
         app:showAsAction="never"
         android:visible="true"
         />
