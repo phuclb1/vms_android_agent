@@ -150,7 +150,7 @@ class LoginActivity : AppCompatActivity() {
                     tv_error_info.visibility = View.VISIBLE
                 }
                 else -> {
-                    tv_error_info.setText("${R.string.err_happen}: $code")
+                    tv_error_info.setText("Đã xảy ra lỗi: $code")
                     tv_error_info.visibility = View.VISIBLE
                 }
             }

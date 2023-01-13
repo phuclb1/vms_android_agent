@@ -444,24 +444,6 @@ public abstract class USBBase2
     }
 
 
-
-
-//    private void resetVideoEncoder(UVCCamera uvcCamera) {
-//        if (glInterface != null) {
-//            glInterface.removeMediaCodecSurface();
-//        }
-//        videoEncoder.reset();
-//        if (glInterface != null) {
-//            glInterface.addMediaCodecSurface(videoEncoder.getInputSurface());
-//        } else {
-//            uvcCamera.stopPreview();
-////            cameraManager.closeCamera();
-////            cameraManager.prepareCamera(videoEncoder.getInputSurface());
-////            cameraManager.openLastCamera();
-//        }
-//    }
-
-
     /**
      * Retry connect
      */

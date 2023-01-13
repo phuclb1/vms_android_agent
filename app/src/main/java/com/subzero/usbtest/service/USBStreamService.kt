@@ -140,7 +140,13 @@ class USBStreamService : Service() {
 
         fun startPreview() {
             logService.appendLog("startPreview", TAG)
-            rtmpUSB?.startPreview(uvcCamera, width, height, fps, 0)
+            val rotation = this.openGlView?.rotation
+            logService.appendLog("startPreview   rotation=$rotation", TAG)
+            if (rotation != null) {
+                rtmpUSB?.startPreview(uvcCamera, width, height, fps, rotation.toInt())
+            }
+
+//            rtmpUSB?.startPreview(uvcCamera, width, height, fps, 90)
         }
 
         fun init(context: Context, openGlView: OpenGlView) {
@@ -169,6 +175,15 @@ class USBStreamService : Service() {
             }
         }
 
+        fun flipView(isHorizonFlip: Boolean, isVerticalFlip: Boolean){
+            openGlView?.setCameraFlip(isHorizonFlip, isVerticalFlip)
+        }
+
+        fun rotateView(rotate: Int){
+            openGlView?.setRotation(rotate)
+            rtmpUSB?.stopPreview(uvcCamera)
+            rtmpUSB?.startPreview(uvcCamera, width, height, fps, rotate)
+        }
 
         private val connectCheckerRtp = object : ConnectCheckerRtmp {
             override fun onConnectionSuccessRtmp() {

@@ -5,6 +5,7 @@ import android.app.Activity
 import android.app.ActivityManager
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.hardware.usb.UsbDevice
 import android.os.*
@@ -39,6 +40,8 @@ class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
   private val width = 1280
   private val height = 720
   private var isUsbOpen = false
+  private var isFlipped = false
+  private var isRotated = false
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -90,6 +93,8 @@ class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
 
   private fun setButtonClickListener(){
     start_stop.setOnClickListener { onButtonStreamClick() }
+    rotate_btn.setOnClickListener { onRotateClick() }
+    flip_btn.setOnClickListener { onFlipClick() }
 //    decline_call_btn.setOnClickListener { onDeclineCall() }
 //    accept_call_btn.setOnClickListener { onAcceptCall() }
 //    end_call_btn.setOnClickListener { onEndCall() }
@@ -297,6 +302,31 @@ class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
         flip_btn.visibility = View.VISIBLE
       }
     }
+  }
+
+  private fun onRotateClick(){
+    if(isRotated){
+      USBStreamService.rotateView(0)
+      isRotated = false
+    }
+    else {
+      USBStreamService.rotateView(90)
+      isRotated = true
+    }
+  }
+
+  private fun onFlipClick(){
+    isFlipped = if(!isFlipped){
+      flipCamera(true, false)
+      true
+    }else{
+      flipCamera(false, false)
+      false
+    }
+  }
+
+  private fun flipCamera(isHorizonFlip: Boolean, isVerticalFlip: Boolean){
+    USBStreamService.flipView(isHorizonFlip, isVerticalFlip)
   }
 
 
