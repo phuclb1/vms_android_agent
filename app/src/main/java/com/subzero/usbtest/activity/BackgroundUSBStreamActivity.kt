@@ -27,6 +27,7 @@ import com.subzero.usbtest.utils.SessionManager
 import kotlinx.android.synthetic.main.activity_main.*
 import okhttp3.*
 import org.webrtc.PeerConnection
+import java.util.*
 
 class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
   private lateinit var sessionManager: SessionManager

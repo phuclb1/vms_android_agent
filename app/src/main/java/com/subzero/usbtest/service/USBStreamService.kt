@@ -266,57 +266,49 @@ class USBStreamService : Service() {
                 rtmpUSB?.stopRecord(uvcCamera)
                 flagRecording = false
                 videoRecordedQueue.add(fileRecording)
-//                uploadVideo(File(fileRecording))
-                callUploadVideo()
+                uploadAllVideoRecorded()
             }
         }
 
-        private fun callUploadVideo(){
+        private fun uploadAllVideoRecorded(){
             if(videoRecordedQueue.isEmpty())
                 return
 
-            var queueInteractor = videoRecordedQueue.iterator()
-            while(queueInteractor.hasNext()){
-                val videoName = queueInteractor.next()
-                uploadVideo(File(videoName))
+            while(!videoRecordedQueue.isEmpty()){
+                val videoname = videoRecordedQueue.poll()
+                uploadVideo(File(videoname))
             }
         }
 
         private fun uploadVideo(file: File){
-            logService.appendLog("======== upload video ${file.absolutePath}    ${file.name}",
-                TAG
-            )
-//            val mediaType = MediaType.parse("text/plain")
-//            val requestBody = RequestBody.create(MediaType.parse("application/octet-stream"), file)
-//            val body = MultipartBody
-//                .Builder()
-//                .setType(MultipartBody.FORM)
-//                .addFormDataPart("video_file", file.name, requestBody)
-//                .build()
-//            val request = Request.Builder()
-//                .url("http://$streamServerIP${Constants.API_UPLOAD_VIDEO}")
-//                .method("POST", body)
-//                .addHeader("Authorization", "Bearer $token")
-//                .build()
-//            agentClient.getClientOkhttpInstance().newCall(request).enqueue(object: okhttp3.Callback {
-//                override fun onFailure(call: Call, e: IOException) {
-//                    logService.appendLog("upload video failed: ${e.message.toString()}",
-//                        TAG
-//                    )
-//                }
-//
-//                override fun onResponse(call: Call, response: Response) {
-//                    val responseData = response.body().toString()
-//                    logService.appendLog("upload video success: ${file.name}",
-//                        TAG
-//                    )
-//
-//                    if(file.exists()){
-//                        file.delete()
-//                    }
-//                }
-//
-//            })
+            logService.appendLog("=== upload video ${file.absolutePath}    ${file.name}", TAG)
+            val mediaType = MediaType.parse("text/plain")
+            val requestBody = RequestBody.create(MediaType.parse("application/octet-stream"), file)
+            val body = MultipartBody
+                .Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart("video_file", file.name, requestBody)
+                .build()
+            val request = Request.Builder()
+                .url("http://$streamServerIP${Constants.API_UPLOAD_VIDEO}")
+                .method("POST", body)
+                .addHeader("Authorization", "Bearer $token")
+                .build()
+            agentClient.getClientOkhttpInstance().newCall(request).enqueue(object: okhttp3.Callback {
+                override fun onFailure(call: Call, e: IOException) {
+                    logService.appendLog("upload video failed: ${e.message.toString()}", TAG)
+                }
+
+                override fun onResponse(call: Call, response: Response) {
+                    val responseData = response.body().toString()
+                    logService.appendLog("upload video success: ${file.name}", TAG)
+
+                    if(file.exists()){
+                        file.delete()
+                    }
+                }
+
+            })
         }
     }
 
