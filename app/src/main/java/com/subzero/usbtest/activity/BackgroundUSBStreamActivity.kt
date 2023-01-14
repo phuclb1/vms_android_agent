@@ -136,6 +136,8 @@ class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
     if(vibrator.hasVibrator()){
       vibrator.cancel()
     }
+
+//    USBStreamService.startStreamRtpWithoutAudio()
   }
 
   private fun onEndCall(){
@@ -143,6 +145,8 @@ class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
     runOnUiThread {
       end_call_btn.visibility = View.GONE
     }
+
+//    USBStreamService.startStreamRtpWithAudio()
   }
 
   private fun onIceConnectionChangeCallback(state: PeerConnection.IceConnectionState){
@@ -184,6 +188,8 @@ class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
     if(vibrator.hasVibrator()){
       vibrator.cancel()
     }
+
+//    USBStreamService.startStreamRtpWithAudio()
   }
 
   /**

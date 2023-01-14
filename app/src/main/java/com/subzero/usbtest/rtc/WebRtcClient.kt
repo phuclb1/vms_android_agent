@@ -168,10 +168,13 @@ class WebRtcClient private constructor() {
                 Log.d(TAG, "receiveMsg: $data")
                 try {
                     val type = data.optString("type")
+                    val to = data.optString("to")
 
                     if (type == "leave"){
-                        Log.e(TAG, "------> leave call")
-                        onRecieveMsgLeave()
+                        if(!to.isNullOrBlank() && to !="null") {
+                            Log.e(TAG, "------> leave call: $to")
+                            onRecieveMsgLeave()
+                        }
                     }
                     else {
                         val from = data.optString("from")

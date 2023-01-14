@@ -171,5 +171,10 @@ public class RtmpUSB2 extends USBBase2 {
     public void inputYUVData(Frame frame) {
 
     }
+
+    @Override
+    public void setAudioInit(boolean enable){
+        audioInitialized = enable;
+    }
 }
 

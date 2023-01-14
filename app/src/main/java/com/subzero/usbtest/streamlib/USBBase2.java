@@ -649,4 +649,6 @@ public abstract class USBBase2
     public abstract void setLogs(boolean enable);
 
     public abstract void setCheckServerAlive(boolean enable);
+
+    public abstract void setAudioInit(boolean enable);
 }
