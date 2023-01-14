@@ -72,11 +72,13 @@ class WebRtcClient private constructor() {
                 isCall = true
             }
             if (state == PeerConnection.IceConnectionState.DISCONNECTED) {
-                closePeerConnection()
+//                closePeerConnection()
+//                closeCall()
             }
             if (state == PeerConnection.IceConnectionState.CLOSED) {
-                peers.clear()
-                isCall = false
+//                peers.clear()
+//                isCall = false
+//                closeCall()
             }
             Log.e(TAG, "onIceConnectionChange-->$state")
 
@@ -206,7 +208,7 @@ class WebRtcClient private constructor() {
 
     fun onRecieveMsgLeave(){
         onCallLeaveCallback()
-        closePeerConnection()
+        closeCall()
     }
 
     /**
@@ -274,6 +276,7 @@ class WebRtcClient private constructor() {
     }
 
     private fun closePeerConnection(){
+        Log.e(TAG, "------- closePeerConnection")
         peers.clear()
         isCall = false
         mPeerConnection?.close()
