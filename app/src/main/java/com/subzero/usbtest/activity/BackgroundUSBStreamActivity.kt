@@ -8,6 +8,7 @@ import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.hardware.usb.UsbDevice
+import android.media.MediaRecorder
 import android.os.*
 import android.support.v4.app.ActivityCompat
 import android.support.v7.app.AppCompatActivity
@@ -124,13 +125,17 @@ class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
    */
   private fun onDeclineCall(){
     webRtcManager.closeCall()
-    vibrator.cancel()
+    if(vibrator.hasVibrator()){
+      vibrator.cancel()
+    }
   }
 
   private fun onAcceptCall(){
     webRtcManager.startAnswer()
     end_call_btn.visibility = View.VISIBLE
-    vibrator.cancel()
+    if(vibrator.hasVibrator()){
+      vibrator.cancel()
+    }
   }
 
   private fun onEndCall(){
@@ -148,6 +153,9 @@ class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
       }
       if (state == PeerConnection.IceConnectionState.CLOSED){
         layout_calling.visibility = View.GONE
+        if(vibrator.hasVibrator()){
+          vibrator.cancel()
+        }
       }
       else {
 
@@ -172,6 +180,9 @@ class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
     Log.d(TAG, "------ callback: onCallLeaveCallback")
     runOnUiThread {
       end_call_btn.visibility = View.GONE
+    }
+    if(vibrator.hasVibrator()){
+      vibrator.cancel()
     }
   }
 

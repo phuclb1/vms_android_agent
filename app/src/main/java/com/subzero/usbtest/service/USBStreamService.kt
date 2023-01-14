@@ -7,6 +7,7 @@ import android.app.NotificationManager
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.media.MediaRecorder
 import android.os.Build
 import android.os.IBinder
 import android.support.v4.app.NotificationCompat
@@ -325,6 +326,14 @@ class USBStreamService : Service() {
 
             })
         }
+
+        fun disableAudio(){
+            rtmpUSB?.disableAudio()
+        }
+
+        fun enableAudio(){
+            rtmpUSB?.enableAudio()
+        }
     }
 
     override fun onDestroy() {
@@ -352,7 +361,7 @@ class USBStreamService : Service() {
             if(rtmpUSB!!.prepareVideo(uvcCamera,
                     width, height, fps, videoBitrate, rotation
                 )
-                && rtmpUSB!!.prepareAudio(
+                && rtmpUSB!!.prepareAudio(MediaRecorder.AudioSource.DEFAULT,
                     audioBitrate, sampleRate, true, false, false
                 )){
                 rtmpUSB!!.startStream(uvcCamera, endpoint)
