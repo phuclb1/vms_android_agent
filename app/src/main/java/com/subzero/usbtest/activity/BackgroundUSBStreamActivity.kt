@@ -118,6 +118,8 @@ class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
     decline_call_btn.setOnClickListener { onDeclineCall() }
     accept_call_btn.setOnClickListener { onAcceptCall() }
     end_call_btn.setOnClickListener { onEndCall() }
+
+    btn_switch_audio.setOnClickListener { onAudioCallChange() }
   }
 
   /**
@@ -137,7 +139,7 @@ class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
       vibrator.cancel()
     }
 
-//    USBStreamService.startStreamRtpWithoutAudio()
+    USBStreamService.startStreamRtpWithoutAudio()
   }
 
   private fun onEndCall(){
@@ -146,7 +148,11 @@ class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
       end_call_btn.visibility = View.GONE
     }
 
-//    USBStreamService.startStreamRtpWithAudio()
+    USBStreamService.startStreamRtpWithAudio()
+  }
+
+  private fun onAudioCallChange(){
+//    webRtcManager.switchAudioMode()
   }
 
   private fun onIceConnectionChangeCallback(state: PeerConnection.IceConnectionState){
@@ -189,7 +195,7 @@ class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
       vibrator.cancel()
     }
 
-//    USBStreamService.startStreamRtpWithAudio()
+    USBStreamService.startStreamRtpWithAudio()
   }
 
   /**

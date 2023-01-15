@@ -44,7 +44,7 @@ public abstract class USBBase2
 
     private Context context;
     protected VideoEncoder videoEncoder;
-    private MicrophoneManager microphoneManager;
+    protected MicrophoneManager microphoneManager;
     private AudioEncoder audioEncoder;
     private boolean streaming = false;
 //    private SurfaceView surfaceView;
@@ -651,4 +651,6 @@ public abstract class USBBase2
     public abstract void setCheckServerAlive(boolean enable);
 
     public abstract void setAudioInit(boolean enable);
+
+    public abstract void setMuteAudio(boolean mute);
 }

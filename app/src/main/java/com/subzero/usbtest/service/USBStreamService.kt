@@ -330,22 +330,25 @@ class USBStreamService : Service() {
 
         fun startStreamRtpWithAudio() {
             logService.appendLog("startStreamRtpWithAudio", TAG)
-            if(rtmpUSB!!.isStreaming){
+            if(rtmpUSB!!.isStreaming) {
                 stopStream()
-//                stopPreview()
-//                rtmpUSB = RtmpUSB2(openGlView, connectCheckerRtp)
+                stopPreview()
 
-            }
-            if (!rtmpUSB!!.isStreaming) {
-                val prepareVideo = rtmpUSB!!.prepareVideo(uvcCamera,
-                    width, height, fps, videoBitrate, rotation)
-                val prepareAudio = rtmpUSB!!.prepareAudio(MediaRecorder.AudioSource.DEFAULT,
-                    audioBitrate, sampleRate, true, false, false)
-                if(prepareVideo && prepareAudio){
-                    rtmpUSB!!.startStream(uvcCamera, endpoint)
+                if (!rtmpUSB!!.isStreaming) {
+                    val prepareVideo = rtmpUSB!!.prepareVideo(
+                        uvcCamera,
+                        width, height, fps, videoBitrate, rotation
+                    )
+                    val prepareAudio = rtmpUSB!!.prepareAudio(
+                        MediaRecorder.AudioSource.DEFAULT,
+                        audioBitrate, sampleRate, true, false, false
+                    )
+                    if (prepareVideo && prepareAudio) {
+                        rtmpUSB!!.startStream(uvcCamera, endpoint)
+                    }
+                } else {
+                    showNotification("You are already streaming :(")
                 }
-            } else {
-                showNotification("You are already streaming :(")
             }
 
         }
@@ -354,17 +357,20 @@ class USBStreamService : Service() {
             logService.appendLog("startStreamRtpWithoutAudio", TAG)
             if(rtmpUSB!!.isStreaming) {
                 stopStream()
-//                stopPreview()
-            }
-            if (!rtmpUSB!!.isStreaming) {
-                val prepareVideo = rtmpUSB!!.prepareVideo(uvcCamera,
-                    width, height, fps, videoBitrate, rotation)
-                rtmpUSB?.setAudioInit(false);
-                if(prepareVideo){
-                    rtmpUSB!!.startStream(uvcCamera, endpoint)
+                stopPreview()
+
+                if (!rtmpUSB!!.isStreaming) {
+                    val prepareVideo = rtmpUSB!!.prepareVideo(
+                        uvcCamera,
+                        width, height, fps, videoBitrate, rotation
+                    )
+                    rtmpUSB?.setAudioInit(false);
+                    if (prepareVideo) {
+                        rtmpUSB!!.startStream(uvcCamera, endpoint)
+                    }
+                } else {
+                    showNotification("You are already streaming :(")
                 }
-            } else {
-                showNotification("You are already streaming :(")
             }
         }
     }

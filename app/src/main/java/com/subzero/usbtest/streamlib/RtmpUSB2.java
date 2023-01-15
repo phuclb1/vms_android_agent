@@ -176,5 +176,13 @@ public class RtmpUSB2 extends USBBase2 {
     public void setAudioInit(boolean enable){
         audioInitialized = enable;
     }
+
+    @Override
+    public void setMuteAudio(boolean mute){
+        if(mute)
+            microphoneManager.mute();
+        else
+            microphoneManager.unMute();
+    }
 }
 

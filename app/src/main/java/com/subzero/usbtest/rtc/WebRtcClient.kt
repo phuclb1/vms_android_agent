@@ -165,7 +165,7 @@ class WebRtcClient private constructor() {
 
             override fun receiveMsg(msg: String) {
                 val data = JSONObject(msg)
-                Log.d(TAG, "receiveMsg: $data")
+//                Log.d(TAG, "receiveMsg: $data")
                 try {
                     val type = data.optString("type")
                     val to = data.optString("to")
@@ -373,12 +373,19 @@ class WebRtcClient private constructor() {
 
     fun switchAudioMode() {
         val am = context?.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        println("before audio mode--->" + am.isWiredHeadsetOn + "---" + am.mode + "----" + am.isSpeakerphoneOn)
-        if (!am.isWiredHeadsetOn) {
-            am.isSpeakerphoneOn = !am.isSpeakerphoneOn
-            am.mode = if (am.mode == AudioManager.MODE_NORMAL) AudioManager.MODE_IN_COMMUNICATION else AudioManager.MODE_NORMAL
+        Log.d(TAG,"before audio mode--->" + am.isWiredHeadsetOn + "---" + am.mode + "----" + am.isSpeakerphoneOn)
+//        if (!am.isWiredHeadsetOn) {
+//            am.isSpeakerphoneOn = !am.isSpeakerphoneOn
+//            am.mode = if (am.mode == AudioManager.MODE_NORMAL) AudioManager.MODE_IN_COMMUNICATION else AudioManager.MODE_NORMAL
+        if(am.mode == AudioManager.MODE_NORMAL){
+            am.mode = AudioManager.MODE_IN_COMMUNICATION
+        }else{
+            am.mode = AudioManager.MODE_NORMAL
         }
-        println("after audio mode--->" + am.isWiredHeadsetOn + "---" + am.mode + "----" + am.isSpeakerphoneOn)
+
+//        }
+
+        Log.d(TAG, "after audio mode--->" + am.isWiredHeadsetOn + "---" + am.mode + "----" + am.isSpeakerphoneOn)
     }
 
     fun getIsCall(): Boolean{
