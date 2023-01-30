@@ -64,6 +64,11 @@ class WebRtcClient private constructor() {
             Log.d(TAG, "------- onIceConnectionReceivingChange")
         }
 
+        override fun onConnectionChange(newState: PeerConnection.PeerConnectionState?) {
+            super.onConnectionChange(newState)
+            Log.d(TAG, "------- onConnectionChange")
+        }
+
         override fun onIceConnectionChange(state: PeerConnection.IceConnectionState?) {
             if (state == PeerConnection.IceConnectionState.FAILED) {
                 isCall = false
@@ -87,16 +92,16 @@ class WebRtcClient private constructor() {
             }
         }
 
-        override fun onIceGatheringChange(p0: PeerConnection.IceGatheringState?) {
-            Log.d(TAG, "------- onIceGatheringChange")
+        override fun onIceGatheringChange(state: PeerConnection.IceGatheringState?) {
+            Log.d(TAG, "------- onIceGatheringChange: $state")
         }
 
         override fun onAddStream(p0: MediaStream?) {
             Log.e(TAG, "onAddStream")
         }
 
-        override fun onSignalingChange(p0: PeerConnection.SignalingState?) {
-            Log.d(TAG, "------- onSignalingChange")
+        override fun onSignalingChange(state: PeerConnection.SignalingState?) {
+            Log.d(TAG, "------- onSignalingChange: $state")
         }
 
         override fun onIceCandidatesRemoved(candidates: Array<out IceCandidate>?) {
@@ -225,6 +230,9 @@ class WebRtcClient private constructor() {
         this.context = context
 //        iceServers.add(PeerConnection.IceServer.builder("stun:23.21.150.121").createIceServer())
 //        iceServers.add(PeerConnection.IceServer.builder("stun:stun.l.google.com:19302").createIceServer())
+
+        Log.d(TAG, "stunUri: $stunUri")
+        Log.d(TAG, "turnUri: $turnUri")
         iceServers.add(PeerConnection.IceServer.builder(stunUri)
             .createIceServer())
         iceServers.add(PeerConnection.IceServer.builder(turnUri)

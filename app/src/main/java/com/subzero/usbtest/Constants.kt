@@ -14,8 +14,10 @@ object Constants {
     const val WEBRTC_SOCKET_PORT = "30084"
     const val API_LOGIN_URL = "/api/v1/auth/sign-in"
     const val API_UPLOAD_VIDEO = "/api/v1/video/upload?"
-    const val TURN_USER = "admin1"
-    const val TURN_PASS = "admin1"
+    const val TURN_USER = "admin"
+    const val TURN_PASS = "admin"
+    const val STUN_PORT = 3476
+    const val TURN_PORT = 3476
 
     const val FOLDER_DOC_NAME = "VTCameraAgent"
     val DOC_DIR = Environment.getExternalStorageDirectory().absolutePath + "/$FOLDER_DOC_NAME"

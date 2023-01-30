@@ -46,10 +46,10 @@ class SessionManager(context: Context) {
     }
 
     fun fetchWebRTCStunUri(): String{
-        return "stun:${prefs.getString(SERVER_IP, null)}:3479"
+        return "stun:${prefs.getString(SERVER_IP, null)}:${Constants.STUN_PORT}"
     }
 
     fun fetchWebRTCTurnUri(): String{
-        return "turn:${prefs.getString(SERVER_IP, null)}:3479"
+        return "turn:${prefs.getString(SERVER_IP, null)}:${Constants.TURN_PORT}"
     }
 }
