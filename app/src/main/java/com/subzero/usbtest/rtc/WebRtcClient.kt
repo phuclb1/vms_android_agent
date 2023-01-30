@@ -165,7 +165,7 @@ class WebRtcClient private constructor() {
 
             override fun receiveMsg(msg: String) {
                 val data = JSONObject(msg)
-//                Log.d(TAG, "receiveMsg: $data")
+                Log.d(TAG, "receiveMsg: $data")
                 try {
                     val type = data.optString("type")
                     val to = data.optString("to")
