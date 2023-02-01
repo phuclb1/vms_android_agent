@@ -10,11 +10,13 @@ import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.*
 import android.view.View.OnClickListener
+import android.widget.Toast
 import com.serenegiant.utils.UIThreadHelper
 import com.subzero.usbtest.Constants
 import com.subzero.usbtest.R
 import com.subzero.usbtest.rtc.WebRtcClient
 import com.subzero.usbtest.service.CameraStreamService
+import com.subzero.usbtest.service.USBStreamService
 import com.subzero.usbtest.utils.CustomizedExceptionHandler
 import com.subzero.usbtest.utils.LogService
 import com.subzero.usbtest.utils.SessionManager
@@ -31,6 +33,8 @@ class BackgroundCameraStreamActivity : AppCompatActivity(), SurfaceHolder.Callba
 
   private var token: String = ""
   private val logService = LogService.getInstance()
+
+  private var doubleBackToExitPressedOnce = false
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -105,11 +109,17 @@ class BackgroundCameraStreamActivity : AppCompatActivity(), SurfaceHolder.Callba
   }
 
   override fun onBackPressed() {
-    super.onBackPressed()
-    val intent = Intent(applicationContext, LoginActivity::class.java)
-    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-    startActivity(intent)
-    stopService(Intent(applicationContext, CameraStreamService::class.java))
+    if(this.doubleBackToExitPressedOnce) {
+      super.onBackPressed()
+      val intent = Intent(applicationContext, LoginActivity::class.java)
+      intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+      startActivity(intent)
+      stopService(Intent(applicationContext, CameraStreamService::class.java))
+      return
+    }
+    this.doubleBackToExitPressedOnce = true
+    Toast.makeText(this, "Please click BACK again to LOGOUT", Toast.LENGTH_SHORT).show()
+    Handler(Looper.getMainLooper()).postDelayed(Runnable { doubleBackToExitPressedOnce = false }, 2000)
   }
 
   private fun generateStreamRtmpUrl(){

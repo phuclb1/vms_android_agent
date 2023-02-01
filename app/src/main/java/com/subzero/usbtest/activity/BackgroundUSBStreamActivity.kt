@@ -47,6 +47,8 @@ class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
   private var isFlipped = false
   private var isRotated = false
 
+  private var doubleBackToExitPressedOnce = false
+
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_main)
@@ -95,11 +97,17 @@ class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
   }
 
   override fun onBackPressed() {
-    super.onBackPressed()
-    val intent = Intent(applicationContext, LoginActivity::class.java)
-    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-    startActivity(intent)
-    stopService(Intent(applicationContext, USBStreamService::class.java))
+    if(this.doubleBackToExitPressedOnce) {
+      super.onBackPressed()
+      val intent = Intent(applicationContext, LoginActivity::class.java)
+      intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+      stopService(Intent(applicationContext, USBStreamService::class.java))
+      startActivity(intent)
+      return
+    }
+    this.doubleBackToExitPressedOnce = true
+    Toast.makeText(this, "Please click BACK again to LOGOUT", Toast.LENGTH_SHORT).show()
+    Handler(Looper.getMainLooper()).postDelayed(Runnable { doubleBackToExitPressedOnce = false }, 2000)
   }
 
   private fun generateStreamRtmpUrl(){

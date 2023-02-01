@@ -51,8 +51,8 @@ class LoginActivity : AppCompatActivity() {
         else {
             Intent(applicationContext, BackgroundCameraStreamActivity::class.java)
         }
-//        et_username.setText("vsmart")
-//        et_password?.setText("123456aA@")
+        et_username.setText("vsmart")
+        et_password?.setText("123456aA@")
         et_ip_stream_server.setText(sessionManager.fetchServerIp())
         tv_error_info.visibility = View.GONE
 
