@@ -341,9 +341,12 @@ class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
             return
           }
         }
-        USBStreamService.setView(openglview)
+
         USBStreamService.setUVCCamera(camera)
-        USBStreamService.startPreview()
+        if(USBStreamService.isUVCCameraAvailable()) {
+          USBStreamService.setView(openglview)
+          USBStreamService.startPreview()
+        }
       }
 
       isUsbOpen = true
