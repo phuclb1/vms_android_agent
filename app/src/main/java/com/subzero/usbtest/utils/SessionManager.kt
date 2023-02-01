@@ -24,6 +24,24 @@ class SessionManager(context: Context) {
         editor.apply()
     }
 
+    fun saveServerIp(ip: String){
+        val editor = prefs.edit()
+        editor.putString(SERVER_IP, ip)
+        editor.apply()
+    }
+
+    fun saveUserLogin(username: String){
+        val editor = prefs.edit()
+        editor.putString(USERNAME, username)
+        editor.apply()
+    }
+
+    fun savePassLogin(password: String){
+        val editor = prefs.edit()
+        editor.putString(PASSWORD, password)
+        editor.apply()
+    }
+
     /**
      * Function to fetch auth token
      */
@@ -31,14 +49,16 @@ class SessionManager(context: Context) {
         return prefs.getString(USER_TOKEN, null)
     }
 
-    fun saveServerIp(ip: String){
-        val editor = prefs.edit()
-        editor.putString(SERVER_IP, ip)
-        editor.apply()
-    }
-
     fun fetchServerIp(): String? {
         return prefs.getString(SERVER_IP, null)
+    }
+
+    fun fetchUserLogin(): String? {
+        return prefs.getString(USERNAME, null)
+    }
+
+    fun fetchPassLogin(): String? {
+        return prefs.getString(PASSWORD, null)
     }
 
     fun fetchWebRTCSocketUrl(): String{

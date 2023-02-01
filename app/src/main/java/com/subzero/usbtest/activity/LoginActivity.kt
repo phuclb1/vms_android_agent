@@ -51,8 +51,10 @@ class LoginActivity : AppCompatActivity() {
         else {
             Intent(applicationContext, BackgroundCameraStreamActivity::class.java)
         }
-        et_username.setText("vsmart")
-        et_password?.setText("123456aA@")
+
+        et_username.setText(sessionManager.fetchUserLogin())
+        et_password?.setText(sessionManager.fetchPassLogin())
+
         et_ip_stream_server.setText(sessionManager.fetchServerIp())
         tv_error_info.visibility = View.GONE
 
@@ -111,6 +113,8 @@ class LoginActivity : AppCompatActivity() {
                         sessionManager.saveAuthToken(authToken)
                         val serverIp = et_ip_stream_server.text
                         sessionManager.saveServerIp(serverIp.toString())
+                        sessionManager.saveUserLogin(et_username.text.toString().trim())
+                        sessionManager.savePassLogin(et_password.text.toString().trim())
 
                         intent_activity.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                         startActivity(intent_activity)
