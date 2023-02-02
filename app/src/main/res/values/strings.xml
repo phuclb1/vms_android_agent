@@ -15,4 +15,6 @@
     <string name="err_ip_stream_server_empty">Chưa nhập địa chỉ IP máy chủ stream</string>
     <string name="no_device_err">Không tìm thấy nguồn dữ liệu</string>
     <string name="agent_busy">Tài khoản đang được dùng trên thiết bị khác</string>
+    <string name="agent_busy_alert">Tài khoản đang được dùng trên thiết bị khác. Bạn vẫn muốn login trên thiết bị này?</string>
+
 </resources>

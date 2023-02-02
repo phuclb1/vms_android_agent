@@ -5,26 +5,20 @@ import android.app.Activity
 import android.app.ActivityManager
 import android.content.Context
 import android.content.Intent
-import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.hardware.usb.UsbDevice
-import android.media.MediaRecorder
 import android.os.*
 import android.support.v4.app.ActivityCompat
-import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.*
-import android.view.View.OnClickListener
 import android.widget.Toast
 import com.serenegiant.usb.USBMonitor
 import com.serenegiant.usb.UVCCamera
-import com.serenegiant.utils.UIThreadHelper
 import com.subzero.usbtest.Constants
 import com.subzero.usbtest.R
 import com.subzero.usbtest.api.AgentClient
-import com.subzero.usbtest.models.LoginResponse
-import com.subzero.usbtest.models.LogoutResponse
 import com.subzero.usbtest.rtc.WebRtcClient
+import com.subzero.usbtest.service.CameraStreamService
 import com.subzero.usbtest.service.USBStreamService
 import com.subzero.usbtest.utils.CustomizedExceptionHandler
 import com.subzero.usbtest.utils.LogService
@@ -32,10 +26,9 @@ import com.subzero.usbtest.utils.SessionManager
 import kotlinx.android.synthetic.main.activity_main.*
 import okhttp3.*
 import org.webrtc.PeerConnection
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
+import java.io.IOException
 import java.util.*
+
 
 class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
   private lateinit var sessionManager: SessionManager
@@ -102,7 +95,7 @@ class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
     super.onDestroy()
     Log.d(TAG, "------ destroy")
     usbMonitor.unregister()
-    callLogoutApi()
+    callLogoutApi(false)
   }
 
   override fun onBackPressed() {
@@ -110,8 +103,8 @@ class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
       super.onBackPressed()
       val intent = Intent(applicationContext, LoginActivity::class.java)
       intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-      stopService(Intent(applicationContext, USBStreamService::class.java))
       startActivity(intent)
+      stopService(Intent(applicationContext, CameraStreamService::class.java))
       return
     }
     this.doubleBackToExitPressedOnce = true
@@ -119,18 +112,35 @@ class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
     Handler(Looper.getMainLooper()).postDelayed(Runnable { doubleBackToExitPressedOnce = false }, 2000)
   }
 
-  private fun callLogoutApi(){
-    agentClient.setUrl(sessionManager.fetchServerIp().toString())
-    agentClient.getInstance().logout().enqueue(object : Callback<LogoutResponse>{
-      override fun onResponse(call: Call<LogoutResponse>, response: Response<LogoutResponse>) {
+  private fun callLogoutApi(isBackIntent: Boolean){
+    val baseURL = "http://${sessionManager.fetchServerIp().toString()}:${Constants.API_PORT}${Constants.API_LOGOUT_URL}"
+    val request = Request.Builder()
+      .url(baseURL)
+      .method("GET", null)
+      .addHeader("Authorization", "Bearer $token")
+      .build()
 
+    agentClient.getClientOkhttpInstance().newCall(request).enqueue(object: okhttp3.Callback {
+      override fun onFailure(call: okhttp3.Call, e: IOException) {
+        Toast.makeText(applicationContext, "Logout failure", Toast.LENGTH_LONG).show()
+        logService.appendLog("Logout response fail", TAG)
       }
+      override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
+        val responseData = response.body().toString()
+        Log.d(TAG, "------ logout: $responseData")
 
-      override fun onFailure(call: Call<LogoutResponse>, t: Throwable) {
-
+        if(isBackIntent){
+          backToLoginActivity()
+        }
       }
     })
-    Log.d(TAG, "----- logout")
+  }
+
+  private fun backToLoginActivity(){
+    val intent = Intent(applicationContext, LoginActivity::class.java)
+    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+    stopService(Intent(applicationContext, USBStreamService::class.java))
+    startActivity(intent)
   }
 
   private fun generateStreamRtmpUrl(){
@@ -147,8 +157,6 @@ class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
     decline_call_btn.setOnClickListener { onDeclineCall() }
     accept_call_btn.setOnClickListener { onAcceptCall() }
     end_call_btn.setOnClickListener { onEndCall() }
-
-    btn_switch_audio.setOnClickListener { onAudioCallChange() }
   }
 
   /**
@@ -178,10 +186,6 @@ class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
     }
 
     USBStreamService.startStreamRtpWithAudio()
-  }
-
-  private fun onAudioCallChange(){
-//    webRtcManager.switchAudioMode()
   }
 
   private fun onIceConnectionChangeCallback(state: PeerConnection.IceConnectionState){
@@ -265,6 +269,9 @@ class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
   override fun onOptionsItemSelected(item: MenuItem): Boolean {
     if (item != null) {
       when(item.itemId){
+        R.id.menu_logout -> {
+          callLogoutApi(true)
+        }
         R.id.menu_setting -> {}
         R.id.menu_about -> {}
         R.id.menu_background_phone_cam -> {

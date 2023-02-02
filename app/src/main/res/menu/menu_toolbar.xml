@@ -2,13 +2,11 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
-        android:id="@+id/menu_setting"
-        android:title="Setting"
-        app:showAsAction="never" />
-    <item
-        android:id="@+id/menu_about"
-        android:title="About"
-        app:showAsAction="never" />
+        android:id="@+id/menu_logout"
+        android:title="Logout"
+        app:showAsAction="never"
+        android:visible="true"
+        />
     <item
         android:id="@+id/menu_background_phone_cam"
         android:title="Phone Camera"
@@ -21,5 +19,12 @@
         app:showAsAction="never"
         android:visible="true"
         />
-
+    <item
+        android:id="@+id/menu_setting"
+        android:title="Setting"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/menu_about"
+        android:title="About"
+        app:showAsAction="never" />
 </menu>

@@ -1,14 +1,17 @@
 package com.subzero.usbtest.activity
 
 import android.annotation.SuppressLint
+import android.content.DialogInterface
 import android.content.Intent
 import android.os.Bundle
 import android.os.Environment
 import android.os.Handler
 import android.os.Looper
+import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
 import android.text.Editable
 import android.text.TextWatcher
+import android.view.ContextThemeWrapper
 import android.view.View
 import android.widget.Toast
 import com.subzero.usbtest.Constants
@@ -30,10 +33,13 @@ class LoginActivity : AppCompatActivity() {
     private val logService = LogService.getInstance()
     private var doubleBackToExitPressedOnce = false
     private lateinit var intent_activity : Intent
+    private var force_login = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
+
+        force_login = false
 
         val dir = File(
             Environment.getExternalStorageDirectory(),
@@ -95,7 +101,7 @@ class LoginActivity : AppCompatActivity() {
         agentClient.getInstance().login(
             LoginRequest(account = et_username.text.toString().trim(),
                 password = et_password.text.toString().trim(),
-                force_login = true
+                force_login = force_login
             )
         )
             .enqueue(object : Callback<LoginResponse> {
@@ -147,6 +153,7 @@ class LoginActivity : AppCompatActivity() {
                     tv_error_info.visibility = View.VISIBLE
                 }
                 406 -> {
+                    showForceLoginAlert()
                     tv_error_info.setText(R.string.agent_busy)
                     tv_error_info.visibility = View.VISIBLE
                 }
@@ -162,6 +169,29 @@ class LoginActivity : AppCompatActivity() {
                     tv_error_info.setText("Đã xảy ra lỗi: $code")
                     tv_error_info.visibility = View.VISIBLE
                 }
+            }
+        }
+    }
+
+    fun showForceLoginAlert() {
+        runOnUiThread {
+            val positiveButtonClick = { dialog: DialogInterface, which: Int ->
+                force_login = true
+                onClickLogin()
+                Toast.makeText(applicationContext, "Force login", Toast.LENGTH_SHORT).show()
+            }
+            val negativeButtonClick = { dialog: DialogInterface, which: Int ->
+            }
+
+            val builder = AlertDialog.Builder(ContextThemeWrapper(this, R.style.AlertDialogCustom))
+
+            with(builder)
+            {
+                setTitle("Agent busy")
+                setMessage(R.string.agent_busy_alert)
+                setPositiveButton(android.R.string.yes, positiveButtonClick)
+                setNegativeButton(android.R.string.no, negativeButtonClick)
+                show()
             }
         }
     }
