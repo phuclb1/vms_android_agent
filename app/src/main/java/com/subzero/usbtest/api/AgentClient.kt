@@ -36,7 +36,7 @@ class AgentClient {
         return instance
     }
 
-    fun create(): AgentService {
+    private fun create(): AgentService {
         val client = getClientOkhttpInstance()
         val retrofit = Retrofit.Builder()
             .baseUrl(baseURL)

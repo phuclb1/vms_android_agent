@@ -13,6 +13,7 @@ object Constants {
     const val RTMP_PORT = "21935"
     const val WEBRTC_SOCKET_PORT = "30084"
     const val API_LOGIN_URL = "/api/v1/auth/sign-in"
+    const val API_LOGOUT_URL = "/api/v1/auth/sign-out"
     const val API_UPLOAD_VIDEO = "/api/v1/video/upload?"
     const val TURN_USER = "admin"
     const val TURN_PASS = "admin"

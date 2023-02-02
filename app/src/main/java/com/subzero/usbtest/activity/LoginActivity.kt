@@ -92,9 +92,10 @@ class LoginActivity : AppCompatActivity() {
         }
 
         agentClient.setUrl(et_ip_stream_server.text.toString())
-        agentClient.create().login(
+        agentClient.getInstance().login(
             LoginRequest(account = et_username.text.toString().trim(),
-                password = et_password.text.toString().trim()
+                password = et_password.text.toString().trim(),
+                force_login = true
             )
         )
             .enqueue(object : Callback<LoginResponse> {
@@ -143,6 +144,10 @@ class LoginActivity : AppCompatActivity() {
                 }
                 404 -> {
                     tv_error_info.setText(R.string.wrong_username)
+                    tv_error_info.visibility = View.VISIBLE
+                }
+                406 -> {
+                    tv_error_info.setText(R.string.agent_busy)
                     tv_error_info.visibility = View.VISIBLE
                 }
                 1 -> {

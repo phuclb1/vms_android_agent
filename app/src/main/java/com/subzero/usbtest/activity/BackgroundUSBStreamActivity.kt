@@ -21,6 +21,9 @@ import com.serenegiant.usb.UVCCamera
 import com.serenegiant.utils.UIThreadHelper
 import com.subzero.usbtest.Constants
 import com.subzero.usbtest.R
+import com.subzero.usbtest.api.AgentClient
+import com.subzero.usbtest.models.LoginResponse
+import com.subzero.usbtest.models.LogoutResponse
 import com.subzero.usbtest.rtc.WebRtcClient
 import com.subzero.usbtest.service.USBStreamService
 import com.subzero.usbtest.utils.CustomizedExceptionHandler
@@ -29,12 +32,16 @@ import com.subzero.usbtest.utils.SessionManager
 import kotlinx.android.synthetic.main.activity_main.*
 import okhttp3.*
 import org.webrtc.PeerConnection
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 import java.util.*
 
 class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
   private lateinit var sessionManager: SessionManager
 
   private val webRtcManager by lazy { WebRtcClient.instance }
+  private val agentClient = AgentClient()
   private lateinit var vibrator: Vibrator
 
   private var token: String = ""
@@ -93,7 +100,9 @@ class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
 
   override fun onDestroy() {
     super.onDestroy()
+    Log.d(TAG, "------ destroy")
     usbMonitor.unregister()
+    callLogoutApi()
   }
 
   override fun onBackPressed() {
@@ -110,10 +119,22 @@ class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
     Handler(Looper.getMainLooper()).postDelayed(Runnable { doubleBackToExitPressedOnce = false }, 2000)
   }
 
+  private fun callLogoutApi(){
+    agentClient.setUrl(sessionManager.fetchServerIp().toString())
+    agentClient.getInstance().logout().enqueue(object : Callback<LogoutResponse>{
+      override fun onResponse(call: Call<LogoutResponse>, response: Response<LogoutResponse>) {
+
+      }
+
+      override fun onFailure(call: Call<LogoutResponse>, t: Throwable) {
+
+      }
+    })
+    Log.d(TAG, "----- logout")
+  }
+
   private fun generateStreamRtmpUrl(){
     var rtmpUrl = "rtmp://${sessionManager.fetchServerIp().toString()}:${Constants.RTMP_PORT}/live/$token"
-//    rtmpUrl = "rtmp://192.168.100.2:1935/live/livestream"
-//    rtmpUrl = "rtmp://103.160.84.179:21935/live/livestream"
     logService.appendLog("RTMP url: $rtmpUrl", TAG)
     et_url.setText(rtmpUrl)
   }
