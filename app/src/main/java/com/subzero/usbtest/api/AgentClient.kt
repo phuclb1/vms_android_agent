@@ -19,8 +19,8 @@ class AgentClient {
     fun getClientOkhttpInstance(): OkHttpClient{
         if(!::clientOkhttp.isInitialized){
             clientOkhttp = OkHttpClient.Builder()
-                .connectTimeout(60, TimeUnit.SECONDS)
-                .readTimeout(60, TimeUnit.SECONDS)
+                .connectTimeout(10, TimeUnit.SECONDS)
+                .readTimeout(10, TimeUnit.SECONDS)
                 .build()
         }
 

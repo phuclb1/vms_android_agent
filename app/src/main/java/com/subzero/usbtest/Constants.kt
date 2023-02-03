@@ -6,6 +6,9 @@ import android.os.Environment
 import java.io.File
 
 object Constants {
+    const val APP_VER = "1.7.1"
+    const val RELEASE_TIME = "02/02/2023"
+
     const val ENABLE_SAVE_LOG = true
     const val IS_DEFAULT_USB_CAMERA = true
     // API

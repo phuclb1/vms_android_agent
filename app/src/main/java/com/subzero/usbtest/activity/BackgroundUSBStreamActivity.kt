@@ -4,11 +4,14 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.ActivityManager
 import android.content.Context
+import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.hardware.usb.UsbDevice
 import android.os.*
 import android.support.v4.app.ActivityCompat
+import android.support.v7.app.AlertDialog
+import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.*
 import android.widget.Toast
@@ -17,6 +20,8 @@ import com.serenegiant.usb.UVCCamera
 import com.subzero.usbtest.Constants
 import com.subzero.usbtest.R
 import com.subzero.usbtest.api.AgentClient
+import com.subzero.usbtest.models.LoginRequest
+import com.subzero.usbtest.models.LoginResponse
 import com.subzero.usbtest.rtc.WebRtcClient
 import com.subzero.usbtest.service.CameraStreamService
 import com.subzero.usbtest.service.USBStreamService
@@ -26,11 +31,12 @@ import com.subzero.usbtest.utils.SessionManager
 import kotlinx.android.synthetic.main.activity_main.*
 import okhttp3.*
 import org.webrtc.PeerConnection
+import retrofit2.Callback
 import java.io.IOException
 import java.util.*
 
 
-class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
+class BackgroundUSBStreamActivity : AppCompatActivity(), SurfaceHolder.Callback {
   private lateinit var sessionManager: SessionManager
 
   private val webRtcManager by lazy { WebRtcClient.instance }
@@ -41,8 +47,8 @@ class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
   private val logService = LogService.getInstance()
 
   private lateinit var usbMonitor: USBMonitor
-  private val width = 1280
-  private val height = 720
+  private val width = 1920
+  private val height = 1080
   private var isUsbOpen = false
   private var isFlipped = false
   private var isRotated = false
@@ -93,7 +99,6 @@ class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
 
   override fun onDestroy() {
     super.onDestroy()
-    Log.d(TAG, "------ destroy")
     usbMonitor.unregister()
     callLogoutApi(false)
   }
@@ -101,10 +106,7 @@ class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
   override fun onBackPressed() {
     if(this.doubleBackToExitPressedOnce) {
       super.onBackPressed()
-      val intent = Intent(applicationContext, LoginActivity::class.java)
-      intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-      startActivity(intent)
-      stopService(Intent(applicationContext, CameraStreamService::class.java))
+      callLogoutApi(true)
       return
     }
     this.doubleBackToExitPressedOnce = true
@@ -241,6 +243,35 @@ class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
     } else {
       startService()
     }
+
+    checkAccountBusy()
+  }
+
+  fun checkAccountBusy(){
+//    agentClient.setUrl(sessionManager.fetchServerIp().toString())
+//    agentClient.getInstance().login(
+//      LoginRequest(account = sessionManager.fetchUserLogin().toString().trim(),
+//        password = sessionManager.fetchPassLogin().toString().trim(),
+//        force_login = false
+//      )
+//    )
+//      .enqueue(object : Callback<LoginResponse> {
+//        override fun onResponse(
+//          call: retrofit2.Call<LoginResponse>,
+//          response: retrofit2.Response<LoginResponse>
+//        ) {
+//          val loginResponse = response.body()
+//          if(loginResponse?.authToken.isNullOrEmpty()){
+//            if(response.code() == 406){
+//              backToLoginActivity()
+//            }
+//          }
+//        }
+//
+//        override fun onFailure(call: retrofit2.Call<LoginResponse>, t: Throwable) {
+//
+//        }
+//      })
   }
 
   /**
@@ -273,7 +304,7 @@ class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
           callLogoutApi(true)
         }
         R.id.menu_setting -> {}
-        R.id.menu_about -> {}
+        R.id.menu_about -> { showAboutDialog() }
         R.id.menu_background_phone_cam -> {
           val intent_activity = Intent(applicationContext, BackgroundCameraStreamActivity::class.java)
           intent_activity.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
@@ -289,19 +320,36 @@ class BackgroundUSBStreamActivity : Activity(), SurfaceHolder.Callback {
     return super.onOptionsItemSelected(item)
   }
 
+  fun showAboutDialog() {
+    runOnUiThread {
+      val positiveButtonClick = { dialog: DialogInterface, which: Int ->
+      }
+
+      val builder = AlertDialog.Builder(ContextThemeWrapper(this, R.style.AlertDialogCustom))
+
+      with(builder)
+      {
+        setTitle("About")
+        val version_info = "Phiên bản: ${Constants.APP_VER}"
+        val release_info = "Thời gian: ${Constants.RELEASE_TIME}"
+        setMessage("$version_info \n$release_info")
+        setPositiveButton(android.R.string.yes, positiveButtonClick)
+        show()
+      }
+    }
+  }
+
   /**
    * Surface event
    */
   override fun surfaceChanged(holder: SurfaceHolder, p1: Int, p2: Int, p3: Int) {
     logService.appendLog("surfaceChanged", TAG)
     USBStreamService.setView(openglview)
-//    USBStreamService.startPreview()
   }
 
   override fun surfaceDestroyed(holder: SurfaceHolder) {
     logService.appendLog("surfaceDestroyed", TAG)
     USBStreamService.setView(applicationContext)
-//    USBStreamService.stopPreview()
   }
 
   override fun surfaceCreated(holder: SurfaceHolder) {

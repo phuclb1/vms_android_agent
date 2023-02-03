@@ -11,13 +11,13 @@
         android:id="@+id/menu_background_phone_cam"
         android:title="Phone Camera"
         app:showAsAction="never"
-        android:visible="true"
+        android:visible="false"
         />
     <item
         android:id="@+id/menu_background_usb_cam"
         android:title="USB Camera"
         app:showAsAction="never"
-        android:visible="true"
+        android:visible="false"
         />
     <item
         android:id="@+id/menu_setting"

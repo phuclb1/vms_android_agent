@@ -18,13 +18,18 @@ import com.pedro.rtplibrary.view.OpenGlView
 import com.serenegiant.usb.UVCCamera
 import com.subzero.usbtest.Constants
 import com.subzero.usbtest.R
+import com.subzero.usbtest.activity.LoginActivity
 import com.subzero.usbtest.api.AgentClient
+import com.subzero.usbtest.models.LoginRequest
+import com.subzero.usbtest.models.LoginResponse
 import com.subzero.usbtest.streamlib.RtmpUSB2
 import com.subzero.usbtest.streamlib.USBBase2
 import com.subzero.usbtest.utils.LogService
 import com.subzero.usbtest.utils.SessionManager
+import kotlinx.android.synthetic.main.activity_login.*
 import kotlinx.android.synthetic.main.activity_main.*
 import okhttp3.*
+import retrofit2.Callback
 import java.io.File
 import java.io.IOException
 import java.util.LinkedList
@@ -81,13 +86,17 @@ class USBStreamService : Service() {
 
         private var endpoint: String? = null
 
-        private val width = 1280
-        private val height = 720
+        private val width = 1920
+        private val height = 1080
         val rotation = 0
         val sampleRate = 44100
         val audioBitrate = 64 * 1024
         val videoBitrate = 1200 * 1024
         val fps = 15
+
+        val maxTimesRetryRtmp = 5
+        var remainTimesRetryRtmp = maxTimesRetryRtmp
+        val rtmpRetryDelay:Long = 1
 
         private var flagRecording = false
         private var fileRecording: String = ""
@@ -193,6 +202,7 @@ class USBStreamService : Service() {
                 logService.appendLog("onConnectionSuccessRtmp", TAG)
                 if(flagRecording)
                     callStopRecord()
+                remainTimesRetryRtmp = 0
             }
 
             override fun onNewBitrateRtmp(bitrate: Long) {
@@ -200,8 +210,12 @@ class USBStreamService : Service() {
             }
 
             override fun onConnectionFailedRtmp(reason: String) {
-                showNotification("Stream connection failed")
+                if(remainTimesRetryRtmp % 5 == 0)
+                    showNotification("Stream connection failed")
+
                 logService.appendLog("onConnectionFailedRtmp", TAG)
+
+                remainTimesRetryRtmp+=1
 
                 if(!rtmpUSB?.isRecording!!){
                     val currentTimestamp = System.currentTimeMillis()
@@ -213,7 +227,7 @@ class USBStreamService : Service() {
                 }
 
                 rtmpUSB?.setReTries(100)
-                rtmpUSB!!.reTry(1000, reason)
+                rtmpUSB!!.reTry(rtmpRetryDelay * 1000, reason)
             }
 
             override fun onConnectionStartedRtmp(rtmpUrl: String) {
@@ -237,6 +251,7 @@ class USBStreamService : Service() {
                 val notification = NotificationCompat.Builder(it, channelId)
                     .setSmallIcon(R.mipmap.ic_launcher_foreground)
                     .setContentTitle("VT Camera Agent Stream")
+                    .setTimeoutAfter(1000)
                     .setContentText(text).build()
                 notificationManager?.notify(notifyId, notification)
             }
@@ -254,6 +269,7 @@ class USBStreamService : Service() {
          * Record Start/Stop
          */
         private fun callStartRecord(url: String):Boolean{
+//            showNotification("Start Record")
             if (!folderRecord.exists()){
                 folderRecord.mkdirs()
             }
@@ -278,12 +294,22 @@ class USBStreamService : Service() {
         }
 
         private fun callStopRecord(){
+//            showNotification("Stop Record")
             logService.appendLog("call stop record", TAG)
             if(rtmpUSB?.isRecording == true){
                 rtmpUSB?.stopRecord(uvcCamera)
                 flagRecording = false
-                videoRecordedQueue.add(fileRecording)
-                uploadAllVideoRecorded()
+
+                // Upload if video's duration > 1 seconds
+                if(remainTimesRetryRtmp > 1) {
+                    videoRecordedQueue.add(fileRecording)
+                    uploadAllVideoRecorded()
+                }else{
+                    val file = File(fileRecording)
+                    if(file.exists()){
+                        file.delete()
+                    }
+                }
             }
         }
 
@@ -298,7 +324,9 @@ class USBStreamService : Service() {
         }
 
         private fun uploadVideo(file: File){
+            val baseURL = "http://${sessionManager.fetchServerIp().toString()}:${Constants.API_PORT}${Constants.API_UPLOAD_VIDEO}"
             logService.appendLog("=== upload video ${file.absolutePath}    ${file.name}", TAG)
+
             val mediaType = MediaType.parse("text/plain")
             val requestBody = RequestBody.create(MediaType.parse("application/octet-stream"), file)
             val body = MultipartBody
@@ -307,18 +335,25 @@ class USBStreamService : Service() {
                 .addFormDataPart("video_file", file.name, requestBody)
                 .build()
             val request = Request.Builder()
-                .url("http://$streamServerIP${Constants.API_UPLOAD_VIDEO}")
+                .url(baseURL)
                 .method("POST", body)
                 .addHeader("Authorization", "Bearer $token")
                 .build()
+//            logService.appendLog("=== upload video request: $request", TAG)
             agentClient.getClientOkhttpInstance().newCall(request).enqueue(object: okhttp3.Callback {
                 override fun onFailure(call: Call, e: IOException) {
                     logService.appendLog("upload video failed: ${e.message.toString()}", TAG)
+                    showNotification("Upload video failed")
+
+                    if(file.exists()){
+                        file.delete()
+                    }
                 }
 
                 override fun onResponse(call: Call, response: Response) {
                     val responseData = response.body().toString()
                     logService.appendLog("upload video success: ${file.name}", TAG)
+                    showNotification("Upload video success")
 
                     if(file.exists()){
                         file.delete()
