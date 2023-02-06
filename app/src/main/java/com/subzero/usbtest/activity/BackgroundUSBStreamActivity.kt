@@ -159,6 +159,7 @@ class BackgroundUSBStreamActivity : AppCompatActivity(), SurfaceHolder.Callback 
     decline_call_btn.setOnClickListener { onDeclineCall() }
     accept_call_btn.setOnClickListener { onAcceptCall() }
     end_call_btn.setOnClickListener { onEndCall() }
+    speaker_btn.setOnClickListener{ onSwitchSpeaker()}
   }
 
   /**
@@ -174,17 +175,31 @@ class BackgroundUSBStreamActivity : AppCompatActivity(), SurfaceHolder.Callback 
   private fun onAcceptCall(){
     webRtcManager.startAnswer()
     end_call_btn.visibility = View.VISIBLE
+    speaker_btn.visibility = View.VISIBLE
     if(vibrator.hasVibrator()){
       vibrator.cancel()
     }
 
+    webRtcManager.setSpeakerOn(true)
+    speaker_btn.setBackgroundResource(R.drawable.speaker_up_24)
+
     USBStreamService.startStreamRtpWithoutAudio()
+  }
+
+  private fun onSwitchSpeaker(){
+    webRtcManager.switchSpeakerMode()
+    if(webRtcManager.getSpeakerStatus()){
+      speaker_btn.setBackgroundResource(R.drawable.speaker_up_24)
+    }else{
+      speaker_btn.setBackgroundResource(R.drawable.speaker_down_24)
+    }
   }
 
   private fun onEndCall(){
     webRtcManager.closeCall()
     runOnUiThread {
       end_call_btn.visibility = View.GONE
+      speaker_btn.visibility = View.GONE
     }
 
     USBStreamService.startStreamRtpWithAudio()
@@ -225,6 +240,7 @@ class BackgroundUSBStreamActivity : AppCompatActivity(), SurfaceHolder.Callback 
     Log.d(TAG, "------ callback: onCallLeaveCallback")
     runOnUiThread {
       end_call_btn.visibility = View.GONE
+      speaker_btn.visibility = View.GONE
     }
     if(vibrator.hasVibrator()){
       vibrator.cancel()
@@ -243,36 +259,8 @@ class BackgroundUSBStreamActivity : AppCompatActivity(), SurfaceHolder.Callback 
     } else {
       startService()
     }
-
-    checkAccountBusy()
   }
 
-  fun checkAccountBusy(){
-//    agentClient.setUrl(sessionManager.fetchServerIp().toString())
-//    agentClient.getInstance().login(
-//      LoginRequest(account = sessionManager.fetchUserLogin().toString().trim(),
-//        password = sessionManager.fetchPassLogin().toString().trim(),
-//        force_login = false
-//      )
-//    )
-//      .enqueue(object : Callback<LoginResponse> {
-//        override fun onResponse(
-//          call: retrofit2.Call<LoginResponse>,
-//          response: retrofit2.Response<LoginResponse>
-//        ) {
-//          val loginResponse = response.body()
-//          if(loginResponse?.authToken.isNullOrEmpty()){
-//            if(response.code() == 406){
-//              backToLoginActivity()
-//            }
-//          }
-//        }
-//
-//        override fun onFailure(call: retrofit2.Call<LoginResponse>, t: Throwable) {
-//
-//        }
-//      })
-  }
 
   /**
    * Stop/start service

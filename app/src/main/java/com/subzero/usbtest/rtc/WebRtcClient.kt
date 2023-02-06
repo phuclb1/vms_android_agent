@@ -396,6 +396,23 @@ class WebRtcClient private constructor() {
         Log.d(TAG, "after audio mode--->" + am.isWiredHeadsetOn + "---" + am.mode + "----" + am.isSpeakerphoneOn)
     }
 
+    fun switchSpeakerMode(){
+        val am = context?.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        if (!am.isWiredHeadsetOn) {
+            am.isSpeakerphoneOn = !am.isSpeakerphoneOn
+        }
+    }
+
+    fun setSpeakerOn(enable: Boolean){
+        val am = context?.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        am.isSpeakerphoneOn = enable
+    }
+
+    fun getSpeakerStatus(): Boolean{
+        val am = context?.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        return am.isSpeakerphoneOn
+    }
+
     fun getIsCall(): Boolean{
         return isCall
     }
