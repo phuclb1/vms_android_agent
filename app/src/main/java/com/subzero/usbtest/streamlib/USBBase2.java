@@ -75,6 +75,7 @@ public abstract class USBBase2
 
     private void init() {
         videoEncoder = new VideoEncoder(this);
+//        videoEncoder.setType(CodecUtil.H265_MIME);
         microphoneManager = new MicrophoneManager(this);
 //        audioEncoder = new AudioEncoder(this);
         setMicrophoneMode(MicrophoneMode.ASYNC);

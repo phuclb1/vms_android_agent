@@ -52,6 +52,7 @@ class USBStreamService : Service() {
         streamServerIP = sessionManager.fetchServerIp().toString()
     }
 
+
     private fun keepAliveTrick() {
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.O) {
             val notification = NotificationCompat.Builder(this, channelId)
@@ -324,6 +325,9 @@ class USBStreamService : Service() {
         }
 
         private fun uploadVideo(file: File){
+            if(!file.exists())
+                return;
+
             val baseURL = "http://${sessionManager.fetchServerIp().toString()}:${Constants.API_PORT}${Constants.API_UPLOAD_VIDEO}"
             logService.appendLog("=== upload video ${file.absolutePath}    ${file.name}", TAG)
 
@@ -346,7 +350,8 @@ class USBStreamService : Service() {
                     showNotification("Upload video failed")
 
                     if(file.exists()){
-                        file.delete()
+                        videoRecordedQueue.add(file.absolutePath)
+//                        file.delete()
                     }
                 }
 
