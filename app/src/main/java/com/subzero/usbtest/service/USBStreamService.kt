@@ -7,7 +7,10 @@ import android.app.NotificationManager
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.media.MediaMetadataRetriever
+import android.media.MediaMetadataRetriever.METADATA_KEY_DURATION
 import android.media.MediaRecorder
+import android.net.Uri
 import android.os.Build
 import android.os.IBinder
 import android.support.v4.app.NotificationCompat
@@ -34,6 +37,7 @@ import java.io.File
 import java.io.IOException
 import java.util.LinkedList
 import java.util.Queue
+import java.util.concurrent.TimeUnit
 
 class USBStreamService : Service() {
 
@@ -324,41 +328,65 @@ class USBStreamService : Service() {
             }
         }
 
+        fun String?.asUri(): Uri? {
+            try {
+                return Uri.parse(this)
+            } catch (e: Exception) {
+            }
+            return null
+        }
+
+        val File.uri get() = this.absolutePath.asUri()
+        fun File.getMediaDuration(context: Context): Long {
+            if (!exists()) return 0
+            val retriever = MediaMetadataRetriever()
+            retriever.setDataSource(context, uri)
+            val duration = retriever.extractMetadata(METADATA_KEY_DURATION)
+            retriever.release()
+
+            return duration.toLongOrNull() ?: 0
+        }
+
         private fun uploadVideo(file: File){
             if(!file.exists())
                 return;
+
+            var duration = contextApp?.let { file.getMediaDuration(it) }
+            duration = duration?.let { TimeUnit.MILLISECONDS.toSeconds(it) }?.rem(60)
 
             val baseURL = "http://${sessionManager.fetchServerIp().toString()}:${Constants.API_PORT}${Constants.API_UPLOAD_VIDEO}"
             logService.appendLog("=== upload video ${file.absolutePath}    ${file.name}", TAG)
 
             val mediaType = MediaType.parse("text/plain")
             val requestBody = RequestBody.create(MediaType.parse("application/octet-stream"), file)
+
+            val file_name = "${file.nameWithoutExtension}_$duration.${file.extension}"
             val body = MultipartBody
                 .Builder()
                 .setType(MultipartBody.FORM)
-                .addFormDataPart("video_file", file.name, requestBody)
+                .addFormDataPart("video_file", file_name, requestBody)
                 .build()
             val request = Request.Builder()
                 .url(baseURL)
                 .method("POST", body)
                 .addHeader("Authorization", "Bearer $token")
                 .build()
-//            logService.appendLog("=== upload video request: $request", TAG)
+            logService.appendLog("=== upload video request: $request", TAG)
             agentClient.getClientOkhttpInstance().newCall(request).enqueue(object: okhttp3.Callback {
                 override fun onFailure(call: Call, e: IOException) {
                     logService.appendLog("upload video failed: ${e.message.toString()}", TAG)
                     showNotification("Upload video failed")
 
                     if(file.exists()){
+                        // If uplaod fail, re-add to queue to try re-upload later
                         videoRecordedQueue.add(file.absolutePath)
-//                        file.delete()
                     }
                 }
 
                 override fun onResponse(call: Call, response: Response) {
                     val responseData = response.body().toString()
-                    logService.appendLog("upload video success: ${file.name}", TAG)
-                    showNotification("Upload video success")
+                    logService.appendLog("upload video success: $file_name   duration: $duration", TAG)
+                    showNotification("Upload video success: ${file.name}  duration: $duration")
 
                     if(file.exists()){
                         file.delete()
